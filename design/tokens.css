@@ -1,0 +1,227 @@
+/* ============================================================
+   DermaPro — Design Tokens (Dark Mode)
+   ============================================================ */
+
+:root {
+  /* ── Neutrals (cinzas com temperatura quente, levemente) ── */
+  --ink-0:  #0b0d10;   /* base ambiente, quase preto mas não frio */
+  --ink-1:  #11141a;   /* surface-0, canvas */
+  --ink-2:  #161a21;   /* surface-1, cards */
+  --ink-3:  #1d222b;   /* surface-2, hover / elevated */
+  --ink-4:  #262c37;   /* surface-3, borders fortes */
+  --ink-5:  #313846;   /* divisor */
+  --ink-6:  #4b5364;   /* text-disabled */
+  --ink-7:  #6c7585;   /* text-mute */
+  --ink-8:  #9ba3b2;   /* text-secondary */
+  --ink-9:  #c8cdd6;   /* text-primary */
+  --ink-10: #e7eaef;   /* text-strong */
+  --ink-11: #f4f6f9;   /* text-hi */
+
+  /* ── Primária — Azul Petróleo Profundo ── */
+  --primary-50:  #e6f0f2;
+  --primary-100: #c8dde1;
+  --primary-200: #8dbac2;
+  --primary-300: #5a97a2;
+  --primary-400: #35767f;   /* hover light */
+  --primary-500: #1f5962;   /* base */
+  --primary-600: #17464d;   /* pressed */
+  --primary-700: #103538;
+  --primary-800: #0b2528;
+
+  /* ── Secundária — Bege Quente ── */
+  --warm-50:  #f4ede2;
+  --warm-100: #e8dcc7;
+  --warm-200: #d5c3a3;
+  --warm-300: #b8a27e;
+  --warm-400: #9b855f;
+  --warm-500: #7d6a49;
+  --warm-600: #5d4e34;
+
+  /* ── Accent — Âmbar Suave ── */
+  --amber-200: #f1d9a3;
+  --amber-300: #e3c07a;
+  --amber-400: #d2a556;  /* accent base */
+  --amber-500: #b68a3f;
+
+  /* ── Semânticas (sem vermelho intenso) ── */
+  --info:       #5a8fa8;   /* azul info */
+  --success:    #7a9661;   /* verde oliva */
+  --attention:  #d2a556;   /* âmbar-laranja */
+  --alert:      #a65a5a;   /* vinho suave */
+
+  --info-bg:      rgba(90, 143, 168, 0.12);
+  --success-bg:   rgba(122, 150, 97, 0.12);
+  --attention-bg: rgba(210, 165, 86, 0.14);
+  --alert-bg:     rgba(166, 90, 90, 0.14);
+
+  /* ── Módulos (4 ativos, 2 em breve — harmônicos) ── */
+  --mod-acne:     #c97d6a;  /* terracota suave */
+  --mod-melasma:  #b78a5a;  /* âmbar-caramelo */
+  --mod-texture:  #6e9a8e;  /* verde-azulado */
+  --mod-signs:    #8a7ba8;  /* lilás fumê */
+  --mod-rosacea:  #a87780;  /* rosê vinho (em breve) */
+  --mod-struct:   #7a8aa0;  /* azul-ardósia (em breve) */
+
+  --mod-intensity: 0.10;   /* tweakable: opacidade do wash no card */
+
+  /* ── Overlays de análise (semitransparentes) ── */
+  --overlay-lesion:  rgba(226, 138, 123, 0.55);   /* bounding box acneica */
+  --overlay-pigment: rgba(188, 140, 92, 0.40);    /* hiperpigmentação */
+  --overlay-shine:   rgba(238, 213, 140, 0.45);   /* brilho */
+  --overlay-lines:   rgba(172, 150, 194, 0.55);   /* linhas detectadas */
+
+  /* ── Tipografia ── */
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+  /* Escala (laptop) */
+  --fs-caption: 12px;
+  --fs-small:   14px;
+  --fs-body:    16px;
+  --fs-h3:      20px;
+  --fs-h2:      28px;
+  --fs-h1:      40px;
+  --fs-display: 64px;
+
+  --lh-tight:   1.15;
+  --lh-snug:    1.3;
+  --lh-normal:  1.5;
+
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semi:     600;
+
+  /* ── Spacing (4/8 escalar — Tailwind compat) ── */
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  12px;
+  --s-4:  16px;
+  --s-5:  20px;
+  --s-6:  24px;
+  --s-8:  32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+  --s-20: 80px;
+
+  /* ── Radii ── */
+  --r-sm:   6px;
+  --r-md:   10px;   /* padrão */
+  --r-lg:   14px;
+  --r-xl:   20px;
+  --r-full: 999px;
+
+  /* ── Shadows (blur generoso, opacidade baixa) ── */
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.25), 0 1px 3px rgba(0,0,0,0.18);
+  --shadow-2: 0 4px 16px rgba(0,0,0,0.28), 0 1px 3px rgba(0,0,0,0.20);
+  --shadow-3: 0 12px 40px rgba(0,0,0,0.40), 0 2px 6px rgba(0,0,0,0.24);
+  --shadow-glow: 0 0 0 1px rgba(141, 186, 194, 0.18), 0 10px 32px rgba(31, 89, 98, 0.25);
+
+  /* ── Motion ── */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 380ms;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--ink-0);
+  color: var(--ink-10);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  font-weight: var(--fw-regular);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01" 1, "cv11" 1;
+}
+
+button { font-family: inherit; }
+
+/* ── Base para slides do deck ── */
+.slide {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  background: var(--ink-1);
+  color: var(--ink-10);
+  font-family: var(--font-sans);
+  overflow: hidden;
+}
+
+.slide-pad {
+  padding: 72px 96px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.eyebrow {
+  font-size: 13px;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--primary-300);
+}
+
+h1.display {
+  font-size: 72px;
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0;
+  color: var(--ink-11);
+}
+h1.slide-h1 {
+  font-size: 52px;
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  margin: 0;
+  color: var(--ink-11);
+  text-wrap: balance;
+}
+h2.slide-h2 {
+  font-size: 32px;
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin: 0;
+  color: var(--ink-11);
+}
+.sub {
+  font-size: 20px;
+  color: var(--ink-8);
+  font-weight: var(--fw-regular);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.mono { font-family: var(--font-mono); font-feature-settings: "tnum" 1; }
+
+/* ── util ── */
+.hr { height: 1px; background: var(--ink-4); border: 0; width: 100%; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--r-full);
+  font-size: 13px;
+  font-weight: var(--fw-medium);
+  background: var(--ink-3);
+  color: var(--ink-9);
+  border: 1px solid var(--ink-4);
+}
+.chip-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--primary-300);
+  flex-shrink: 0;
+}

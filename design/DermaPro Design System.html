@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>DermaPro — Design System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="tokens.css" />
+<link rel="stylesheet" href="components.css" />
+<style>
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Tweaks panel */
+  .tweaks {
+    position: fixed;
+    right: 16px;
+    bottom: 64px;
+    width: 280px;
+    background: var(--ink-2);
+    border: 1px solid var(--ink-4);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-3);
+    padding: 16px;
+    z-index: 2147483100;
+    font-family: var(--font-sans);
+    color: var(--ink-10);
+    display: none;
+  }
+  .tweaks[data-open] { display: block; }
+  .tweaks h4 { margin: 0 0 4px; font-size: 14px; font-weight: 600; color: var(--ink-11); }
+  .tweaks .tw-sub { font-size: 11px; color: var(--ink-7); margin-bottom: 14px; }
+  .tweaks .tw-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .tweaks .tw-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-7); }
+  .tweaks select, .tweaks input[type=range] {
+    width: 100%;
+    background: var(--ink-1); color: var(--ink-10);
+    border: 1px solid var(--ink-4); border-radius: 6px;
+    padding: 8px 10px; font-size: 13px; font-family: inherit;
+  }
+  .tweaks input[type=range] { padding: 0; accent-color: var(--primary-400); }
+</style>
+</head>
+<body>
+
+<deck-stage width="1920" height="1080">
+  <section id="cover"></section>
+  <section id="principles"></section>
+  <section id="palette-core"></section>
+  <section id="palette-semantic"></section>
+  <section id="typography"></section>
+  <section id="geometry"></section>
+  <section id="logo"></section>
+  <section id="components"></section>
+  <section id="hub"></section>
+  <section id="analysis"></section>
+  <section id="disclaimer"></section>
+  <section id="presentation"></section>
+</deck-stage>
+
+<div class="tweaks" id="tweaks">
+  <h4>Tweaks</h4>
+  <div class="tw-sub">Ative Tweaks na toolbar para editar.</div>
+
+  <div class="tw-row">
+    <span class="tw-label">Paleta primária</span>
+    <select id="tw-primary">
+      <option value="petroleum">Azul petróleo (padrão)</option>
+      <option value="slate">Ardósia fria</option>
+      <option value="forest">Verde musgo</option>
+      <option value="mocha">Mocha quente</option>
+    </select>
+  </div>
+
+  <div class="tw-row">
+    <span class="tw-label">Intensidade cor de módulo</span>
+    <input type="range" id="tw-intensity" min="0.04" max="0.22" step="0.01" />
+  </div>
+
+  <div class="tw-row">
+    <span class="tw-label">Raio das bordas</span>
+    <select id="tw-radius">
+      <option value="6">Sutil (6 / 8 / 10)</option>
+      <option value="10" selected>Padrão (6 / 10 / 14)</option>
+      <option value="14">Amplo (10 / 14 / 20)</option>
+    </select>
+  </div>
+
+  <div class="tw-row">
+    <span class="tw-label">Tipografia</span>
+    <select id="tw-font">
+      <option value="DM Sans">DM Sans (padrão)</option>
+      <option value="Space Grotesk">Space Grotesk</option>
+      <option value="Inter">Inter</option>
+    </select>
+  </div>
+</div>
+
+<script type="application/json" id="speaker-notes">
+[
+  "Capa do design system DermaPro. Trata-se de uma ferramenta de análise visual da pele usada durante a consulta, com tela espelhada em Apple TV. Esta primeira versão cobre tokens, logo, componentes e os mockups das telas-chave.",
+  "Quatro princípios orientam toda decisão visual: sóbrio não frio, clínico não hospitalar, moderno não tech-bro, acolhedor não infantilizado.",
+  "Paleta essencial: azul petróleo profundo como primária, bege quente como secundária, âmbar como accent. Trio com temperatura — distante de clínicas frias.",
+  "Cores semânticas sem vermelho intenso: info azul, sucesso verde oliva, atenção âmbar, alerta vinho. Os quatro módulos têm tons distintos mas vizinhos na roda.",
+  "Tipografia DM Sans. Escala modular com três pesos apenas: Regular, Medium, Semibold.",
+  "Geometria: escala 4/8 Tailwind-compat, raios 6/10/14/20, sombras com blur generoso.",
+  "Logo: círculo (rosto de frente) + curva sutil (análise/sorriso) + ponto (landmark MediaPipe). Monocromático, funciona em fundo claro e escuro.",
+  "Átomos: botões, badges, classificações e chart de distribuição construídos só com tokens.",
+  "Hub: seis cards, quatro ativos, dois esmaecidos com badge Em breve. Cada card tem identidade visual própria via wash sutil + ícone colorido.",
+  "Página de análise: upload, análise animada, e resultado com imagem + overlays + painel de métricas.",
+  "Modal de disclaimer de primeiro uso. Nunca sobrepõe o trabalho do médico.",
+  "Modo Apresentação: fullscreen, tipografia amplificada para leitura a 2-3m em Apple TV."
+]
+</script>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="deck-stage.js"></script>
+
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="logo.jsx"></script>
+<script type="text/babel" src="slides-tokens.jsx"></script>
+<script type="text/babel" src="slides-components.jsx"></script>
+<script type="text/babel" src="slides-app.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+  // Mount each slide into its section.
+  const pairs = [
+    ['cover', SlideCover],
+    ['principles', SlidePrinciples],
+    ['palette-core', SlidePaletteCore],
+    ['palette-semantic', SlidePaletteSemantic],
+    ['typography', SlideTypography],
+    ['geometry', SlideGeometry],
+    ['logo', SlideLogo],
+    ['components', SlideComponents],
+    ['hub', SlideHub],
+    ['analysis', SlideAnalysis],
+    ['disclaimer', SlideDisclaimer],
+    ['presentation', SlidePresentation],
+  ];
+  pairs.forEach(([id, C]) => {
+    const el = document.getElementById(id);
+    if (el) ReactDOM.createRoot(el).render(<C />);
+  });
+</script>
+
+<script>
+  // ── Tweaks: edit mode protocol ─────────────────────────────
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "primary": "petroleum",
+    "intensity": 0.10,
+    "radius": 10,
+    "font": "DM Sans"
+  }/*EDITMODE-END*/;
+
+  const PRIMARIES = {
+    petroleum: { p300: '#5a97a2', p400: '#35767f', p500: '#1f5962', p600: '#17464d' },
+    slate:     { p300: '#8ea1b5', p400: '#627a92', p500: '#3e5771', p600: '#2c4157' },
+    forest:    { p300: '#8aa88a', p400: '#5d7f5d', p500: '#3e5e3e', p600: '#2d472d' },
+    mocha:     { p300: '#b0937a', p400: '#8c6e54', p500: '#68503a', p600: '#4d3b2a' },
+  };
+
+  function applyTweaks(t) {
+    const r = document.documentElement;
+    const p = PRIMARIES[t.primary] || PRIMARIES.petroleum;
+    r.style.setProperty('--primary-300', p.p300);
+    r.style.setProperty('--primary-400', p.p400);
+    r.style.setProperty('--primary-500', p.p500);
+    r.style.setProperty('--primary-600', p.p600);
+    r.style.setProperty('--mod-intensity', String(t.intensity));
+    const base = parseInt(t.radius, 10);
+    r.style.setProperty('--r-sm', (base - 4) + 'px');
+    r.style.setProperty('--r-md', base + 'px');
+    r.style.setProperty('--r-lg', (base + 4) + 'px');
+    r.style.setProperty('--r-xl', (base + 10) + 'px');
+    r.style.setProperty('--font-sans', `'${t.font}', ui-sans-serif, system-ui, sans-serif`);
+
+    // Update controls
+    const pick = (id) => document.getElementById(id);
+    if (pick('tw-primary')) pick('tw-primary').value = t.primary;
+    if (pick('tw-intensity')) pick('tw-intensity').value = t.intensity;
+    if (pick('tw-radius')) pick('tw-radius').value = t.radius;
+    if (pick('tw-font')) pick('tw-font').value = t.font;
+  }
+
+  let tweaks = { ...TWEAK_DEFAULTS };
+  applyTweaks(tweaks);
+
+  const panel = document.getElementById('tweaks');
+
+  // Order: listener first, then announce availability.
+  window.addEventListener('message', (ev) => {
+    const d = ev.data;
+    if (!d || typeof d !== 'object') return;
+    if (d.type === '__activate_edit_mode') panel.setAttribute('data-open', '');
+    if (d.type === '__deactivate_edit_mode') panel.removeAttribute('data-open');
+  });
+  try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch (e) {}
+
+  function update(key, val) {
+    tweaks[key] = val;
+    applyTweaks(tweaks);
+    try {
+      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: val } }, '*');
+    } catch (e) {}
+  }
+
+  document.getElementById('tw-primary').addEventListener('change', (e) => update('primary', e.target.value));
+  document.getElementById('tw-intensity').addEventListener('input', (e) => update('intensity', parseFloat(e.target.value)));
+  document.getElementById('tw-radius').addEventListener('change', (e) => update('radius', parseInt(e.target.value, 10)));
+  document.getElementById('tw-font').addEventListener('change', (e) => update('font', e.target.value));
+</script>
+
+</body>
+</html>
