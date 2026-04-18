@@ -23,45 +23,45 @@ export type SkinROI = {
 // Contorno facial externo (face oval)
 const IDX_FACE_OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109] as const;
 
-// Testa: hairline direita → temporal direita → sobrancelhas → glabela → sobrancelhas esq → temporal esq
+// Testa: base (linha sobrancelhas esq→dir) → hairline (dir→esq)
 const IDX_FOREHEAD = [
-  10, 338, 297, 332, 284, 251,        // hairline: centro → têmpora direita
-  21, 54, 103, 67, 109,               // temporal direita (conservador)
-  46, 70, 63, 105, 66, 107,           // sobrancelha direita: externo → interno
-  55, 8, 285,                          // glabela
-  336, 296, 334, 293, 300, 276,       // sobrancelha esquerda: interno → externo
-  389, 356,                            // pontos de transição para fechar hairline
+  // Base: linha das sobrancelhas, esquerda → direita da imagem
+  46, 53, 52, 65, 55, 107, 9, 336, 285, 295, 282, 283, 276,
+  // Hairline: têmpora direita → topo → têmpora esquerda
+  251, 284, 332, 297, 338, 10, 109, 67, 103, 54, 21,
 ] as const;
 
-// Bochechas — polígonos completos cobrindo área infraorbital + malar + mandibular
+// Bochechas — convenção paciente: left = bochecha esquerda da paciente (lado direito da imagem)
+// Bochecha ESQUERDA da paciente = lado direito da imagem = índices baixos (~116-234)
 const IDX_LEFT_CHEEK_POLY = [
-  116, 123, 147, 213, 192, 214, 210, 211, 32, 208,
-  199, 175, 152, 148, 176, 149, 150, 187, 207, 216,
-  206, 205, 36, 142, 126, 203, 98, 97, 49, 131, 134, 51, 5,
+  50, 205, 187, 147, 123, 210, 169, 165, 203,
 ] as const;
 
+// Bochecha DIREITA da paciente = lado esquerdo da imagem = índices altos (~280-454)
 const IDX_RIGHT_CHEEK_POLY = [
-  345, 346, 347, 348, 349, 350,        // infraorbital direita
-  451, 452, 453, 464,                  // lateral nasal esquerda da foto
-  435, 401, 366, 376, 352,             // lateral descendo
-  411, 447, 454, 323, 361,             // mandibular (duplicatas 352 e 345 removidas)
-  356, 389, 251, 284,                  // transição superior de volta
+  280, 425, 411, 376, 352, 430, 394, 423,
 ] as const;
 
-// Queixo — de abaixo do lábio até ponta do queixo, com laterais
+// Queixo — conservador: abaixo da boca até ponta do queixo
 const IDX_CHIN_POLY = [
-  61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291,   // contorno da boca inferior
-  287, 273, 335, 406, 313, 421, 418, 424, 422,           // lateral direita descendo
-  152, 148, 176, 149, 150,                                // ponta do queixo
-  194, 201, 200, 199, 175,                                // lateral esquerda subindo
-  83, 182, 106, 43, 57,                                   // voltar à boca
+  194, 201, 200, 421, 418,            // lateral e inferior abaixo da boca
+  175, 152, 148, 176, 149, 150,       // ponta do queixo
+  169, 136, 172,                       // retorno lateral
 ] as const;
 
-// Nariz (base e laterais, sem narinas)
-const IDX_NOSE_BASE_POLY = [8, 9, 168, 6, 197, 195, 5, 4, 19, 94, 2, 164, 393, 417] as const;
-// Narinas (holes) — ponto 2 removido para evitar holes que se tocam na ponta
-const IDX_NARIS_RIGHT = [49, 48, 64, 98, 97] as const;
-const IDX_NARIS_LEFT  = [279, 278, 294, 327, 326] as const;
+// Nariz — inclui laterais e asas nasais
+const IDX_NOSE_BASE_POLY = [
+  8,                                    // topo (glabela/entre sobrancelhas)
+  417, 413, 464, 357, 343, 412, 465,   // lateral direita descendo
+  391, 327, 326,                        // asa nasal direita
+  2,                                    // ponta nasal
+  97, 98, 129,                          // asa nasal esquerda
+  49, 131, 134, 51, 5,                  // lateral esquerda subindo
+  195, 197, 6, 168,                     // ponte do nariz (topo)
+] as const;
+// Narinas (holes)
+const IDX_NARIS_RIGHT = [358, 279, 331, 294] as const;
+const IDX_NARIS_LEFT  = [129, 49, 102, 64] as const;
 
 // Região supralabial (filtrum + área acima dos lábios) — usado em melasma
 const IDX_SUPRALABIAL = [0,37,39,40,185,61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0] as const;
