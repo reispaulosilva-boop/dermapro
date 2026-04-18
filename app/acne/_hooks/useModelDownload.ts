@@ -1,16 +1,10 @@
 'use client';
 
 // TODO (Bloco 3): implementar useModelDownload completo
-// TODO: trocar ModelConfig por import de @/app/_shared/config/models quando criado no Prompt 2.2
+
+import type { ModelConfig } from '@/app/_shared/config/models';
 
 export type ModelDownloadStatus = 'idle' | 'downloading' | 'ready' | 'error';
-
-// Placeholder — substituir por import real no Bloco 3
-export interface ModelConfig {
-  id: string;
-  url: string;
-  expectedSize: number;
-}
 
 export interface UseModelDownloadResult {
   status: ModelDownloadStatus;
