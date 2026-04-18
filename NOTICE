@@ -1,0 +1,18 @@
+DermaPro
+Copyright (C) 2026 Paulo Reis Silva
+
+This product includes software developed by third parties:
+
+- Ultralytics YOLOv8 (AGPL-3.0) — https://github.com/ultralytics/ultralytics
+  Used only for converting the acne detection model to ONNX format.
+
+- Tinny-Robot/acne model (Apache 2.0) — https://huggingface.co/Tinny-Robot/acne
+  Authors: Nathaniel Handan, Amina Shiga.
+
+- MediaPipe Face Landmarker (Apache 2.0) — Google LLC.
+
+- ONNX Runtime (MIT) — Microsoft Corporation.
+
+- shadcn/ui (MIT) — components/ui/ files.
+
+All other code is licensed under AGPL-3.0 (see LICENSE).
