@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { PresentationModeProvider } from "@/app/_shared/components/PresentationModeProvider";
+import { ServiceWorkerRegistrar } from "@/app/_shared/components/ServiceWorkerRegistrar";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
       className={`${dmSans.variable} ${jetbrainsMono.variable} dark`}
     >
       <body className="min-h-screen antialiased">
+        <ServiceWorkerRegistrar />
         <PresentationModeProvider>{children}</PresentationModeProvider>
       </body>
     </html>
