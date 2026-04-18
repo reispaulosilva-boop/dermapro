@@ -1,9 +1,15 @@
 # Conversão do Modelo Acne: PyTorch → ONNX
 
 **Modelo fonte:** `Tinny-Robot/acne` (Hugging Face)
+**Variante:** YOLOv8m (medium, 25.8M parâmetros) — maior precisão que nano, especialmente em lesões pequenas
+**Tamanho do .onnx:** ~99 MB
 **Licença:** Apache 2.0
 **Autores:** Nathaniel Handan + Amina Shiga
 **Atribuição:** registrada em `NOTICE` na raiz do repositório
+
+> **Nota sobre tamanho:** o modelo é maior que o inicialmente previsto (~6 MB nano → ~99 MB medium).
+> O usuário verá download mais longo na primeira análise (~5–30 s em banda larga, ~30–60 s em 4G).
+> O Service Worker cacheia o modelo após o primeiro download — usos subsequentes são instantâneos.
 
 Este script baixa os pesos PyTorch originais localmente, converte para ONNX e **não redistribui os pesos `.pt` originais**. O arquivo `.onnx` resultante é publicado como GitHub Release do projeto DermaPro, mantendo a atribuição conforme a Apache 2.0.
 
@@ -45,14 +51,14 @@ python scripts/convert-acne-model.py
 Saída esperada no terminal:
 ```
 Baixando pesos PyTorch do Hugging Face...
-Baixado: scripts/output/best.pt
+Baixado: scripts/output/acne.pt
 Carregando modelo com Ultralytics...
 Classes: {0: 'lesao_acneiforme'}   ← nome pode variar; registre o nome real
 Imgsz: 640
 Exportando para ONNX (opset=12, simplify=True, imgsz=640, dynamic=False)...
-ONNX gerado: scripts/output/best.onnx
-Arquivo final: scripts/output/acne-yolov8n.onnx
-Tamanho: X.XX MB
+ONNX gerado: scripts/output/acne.onnx
+Arquivo final: scripts/output/acne-yolov8m.onnx
+Tamanho: ~99.XX MB
 Conversão concluída com sucesso.
 ```
 
@@ -62,10 +68,10 @@ Tempo esperado: 2–5 minutos.
 
 ## Validação do arquivo gerado
 
-Verifique que `scripts/output/acne-yolov8n.onnx` existe e tem entre 2–20 MB:
+Verifique que `scripts/output/acne-yolov8m.onnx` existe e tem entre 50–200 MB (esperado ~99 MB):
 
 ```bash
-ls -lh scripts/output/acne-yolov8n.onnx
+ls -lh scripts/output/acne-yolov8m.onnx
 ```
 
 Teste de inferência com imagem dummy (opcional mas recomendado):
@@ -75,7 +81,7 @@ python - <<'EOF'
 import onnxruntime as ort
 import numpy as np
 
-session = ort.InferenceSession("scripts/output/acne-yolov8n.onnx")
+session = ort.InferenceSession("scripts/output/acne-yolov8m.onnx")
 inp = session.get_inputs()[0]
 print(f"Input name: {inp.name}, shape: {inp.shape}, type: {inp.type}")
 
@@ -98,24 +104,26 @@ Saída esperada do output shape: `(1, 5, 8400)` — confirma que é YOLOv8n sing
 
 ```bash
 gh release create v0.2.0-acne-model \
-  scripts/output/acne-yolov8n.onnx \
-  --title "Modelo Acne YOLOv8n v0.2.0" \
-  --notes "Modelo ONNX derivado de Tinny-Robot/acne (Apache 2.0, Nathaniel Handan + Amina Shiga). YOLOv8n single-class ('lesao_acneiforme'), input 640x640, exportado com opset 12."
+  scripts/output/acne-yolov8m.onnx \
+  --title "Modelo Acne YOLOv8m v0.2.0" \
+  --notes "Modelo ONNX derivado de Tinny-Robot/acne (Apache 2.0, Nathaniel Handan + Amina Shiga). YOLOv8m single-class ('lesao_acneiforme'), input 640x640, exportado com opset 12. Tamanho: ~99 MB."
 ```
 
 ### Opção 2 — Via navegador
 
 1. Abra <https://github.com/reispaulosilva-boop/dermapro/releases/new>
 2. **Choose a tag:** digite `v0.2.0-acne-model` e clique "Create new tag"
-3. **Release title:** `Modelo Acne YOLOv8n v0.2.0`
+3. **Release title:** `Modelo Acne YOLOv8m v0.2.0`
 4. **Description:** cole o texto do `--notes` acima
-5. **Attach binaries:** arraste `scripts/output/acne-yolov8n.onnx`
+5. **Attach binaries:** arraste `scripts/output/acne-yolov8m.onnx`
 6. Clique **Publish release**
+
+> **Atenção:** o arquivo tem ~99 MB. O upload via navegador pode levar 1–3 minutos dependendo da conexão. Aguarde a confirmação "Release published" antes de fechar.
 
 ### Verificação após upload
 
 ```bash
-curl -sI "https://github.com/reispaulosilva-boop/dermapro/releases/download/v0.2.0-acne-model/acne-yolov8n.onnx" | head -5
+curl -sI "https://github.com/reispaulosilva-boop/dermapro/releases/download/v0.2.0-acne-model/acne-yolov8m.onnx" | head -5
 ```
 
 Deve retornar `HTTP/2 302` (redirect do GitHub) ou `200 OK`. Se retornar `404`, verifique o nome da tag e o nome do arquivo no release.
