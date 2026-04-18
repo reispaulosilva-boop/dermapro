@@ -237,7 +237,7 @@ export function otsuThreshold(
   factor = 1.0,
 ): { threshold: number; binary: Uint8Array } {
   const hist = new Float64Array(256);
-  for (const v of img) hist[v]++;
+  for (const v of img) { hist[v] = (hist[v] ?? 0) + 1; }
   const total = img.length;
 
   let sumAll = 0;

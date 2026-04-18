@@ -77,7 +77,8 @@ function buildTileCDF(
   const hist = new Int32Array(256);
   for (let y = y0; y < y1; y++) {
     for (let x = x0; x < x1; x++) {
-      hist[gray[y * imgWidth + x]!]++;
+      const pv = gray[y * imgWidth + x]!;
+      hist[pv] = (hist[pv] ?? 0) + 1;
     }
   }
 

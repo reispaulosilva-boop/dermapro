@@ -54,7 +54,7 @@ describe('tokens — overlays', () => {
     // Extrai o alpha de uma string rgba
     const getAlpha = (rgba: string) => {
       const m = rgba.match(/rgba\([^)]+,\s*([\d.]+)\)/);
-      return m ? parseFloat(m[1]) : 0;
+      return m ? parseFloat(m[1] ?? '0') : 0;
     };
     expect(getAlpha(overlays.lesion.stroke)).toBeGreaterThan(getAlpha(overlays.lesion.fill));
     expect(getAlpha(overlays.pigment.stroke)).toBeGreaterThan(getAlpha(overlays.pigment.fill));
