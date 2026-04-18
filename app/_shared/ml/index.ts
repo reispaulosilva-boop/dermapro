@@ -8,3 +8,4 @@ export * from './connectedComponents';
 export * from './gaussianBlur';
 export * from './hessianMatrix';
 export * from './itaCalculator';
+export * from './yolo';

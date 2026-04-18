@@ -173,6 +173,16 @@
   --mod-textura:    var(--mod-texture);  /* tokens.css chama "texture" */
   --mod-expression: var(--mod-signs);   /* tokens.css chama "signs"; módulo id = "linhas" */
 
+  /* --- Módulo Acne — níveis de severidade Hayashi (I–IV) ---
+   * Derivadas da cor base --mod-acne (#c97d6a, terracota suave) variando luminosidade.
+   * Usadas como background de SeverityBadge. Texto sobre elas: --text-strong.
+   * Nomenclatura: --mod-acne-level-{i|ii|iii|iv} para não colidir com --mod-acne-soft (overlay).
+   */
+  --mod-acne-level-i:   color-mix(in oklab, #c97d6a 18%, var(--ink-2));  /* Leve — muito sutil */
+  --mod-acne-level-ii:  color-mix(in oklab, #c97d6a 42%, var(--ink-2));  /* Moderado */
+  --mod-acne-level-iii: color-mix(in oklab, #c97d6a 72%, var(--ink-2));  /* Marcante — terracota pleno */
+  --mod-acne-level-iv:  color-mix(in oklab, #c97d6a 50%, #2d0603);       /* Intenso — vinho suave */
+
   /* --- Módulos — variantes soft (bg de ícones e trilhas de barras) --- */
   /* Não existem em tokens.css; derivadas como rgba(cor_base, 0.15) sobre surface dark. */
   --mod-acne-soft:       rgba(201, 125, 106, 0.15);

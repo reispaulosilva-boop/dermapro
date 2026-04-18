@@ -91,8 +91,20 @@ export const semantic = {
  * aqui exportamos por id do módulo conforme config/modules.ts.
  */
 export const modules = {
-  /** Módulo Acne (id: 'acne') — terracota suave */
-  acne:       { base: '#c97d6a', soft: 'rgba(201, 125, 106, 0.15)' },
+  /** Módulo Acne (id: 'acne') — terracota suave.
+   *  hayashi: 4 níveis de severidade derivados da cor base (I=sutil → IV=vinho).
+   *  CSS vars correspondentes: --mod-acne-level-{i|ii|iii|iv} em globals.css.
+   *  Usar as CSS vars em componentes; estes valores JS são para Canvas e jsPDF. */
+  acne: {
+    base:    '#c97d6a',
+    soft:    'rgba(201, 125, 106, 0.15)',
+    hayashi: {
+      i:   'var(--mod-acne-level-i)',    // Leve — terracota muito sutil
+      ii:  'var(--mod-acne-level-ii)',   // Moderado
+      iii: 'var(--mod-acne-level-iii)',  // Marcante — terracota pleno
+      iv:  'var(--mod-acne-level-iv)',   // Intenso — vinho suave
+    },
+  },
   /** Módulo Melasma (id: 'melasma') — âmbar-caramelo */
   melasma:    { base: '#b78a5a', soft: 'rgba(183, 138, 90, 0.15)' },
   /** Módulo Textura (id: 'textura') — verde-azulado */
