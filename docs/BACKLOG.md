@@ -5,6 +5,14 @@ Itens fora do escopo do MVP, a revisitar depois que a Fase 1 e os 4 módulos ati
 ## Visual
 - Light mode / toggle dark-light: gerar versão light no Claude Design, implementar toggle no dropdown Ajustes, testar em consultório real. Prioridade: média.
 
+## Visual / ROIs
+- Refinamento das ROIs faciais (especialmente bochechas e nariz):
+  - Bochechas cobrindo área reduzida, não alcançam todo o zigomático.
+  - Nariz em forma de "lança" vertical, com cobertura mínima das asas nasais.
+  - Refinar com múltiplas fotos de pacientes após uso real em consultório (evitar over-fit em uma única foto).
+  - Considerar usar constantes oficiais MediaPipe (`FACEMESH_LEFT_CHEEK`, `FACEMESH_RIGHT_CHEEK`, etc.) em vez de listas manuais de índices.
+  - Prioridade: baixa — ROIs estão anatomicamente corretas (lado certo, sem invasão de olhos/orelhas/pescoço); impacto em precisão de contagem é calibrável com dados reais.
+
 ## Módulos
 - Módulo Rosácea (enabled: false no MVP): implementação completa.
 - Módulo Estrutura Facial via MediaPipe FaceMesh (enabled: false no MVP): implementação completa.
