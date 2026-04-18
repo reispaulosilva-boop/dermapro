@@ -39,9 +39,9 @@ Médico dermatologista (proprietário do projeto) que atende em consultório e u
 
 ### 2.1 Stack
 
-- **Next.js 14+** com App Router.
+- **Next.js 16** com App Router.
 - **TypeScript** estrito.
-- **Tailwind CSS** + **shadcn/ui** para componentes base.
+- **Tailwind CSS v4** (CSS-first config, sem `tailwind.config.ts`) + **shadcn/ui** para componentes base.
 - **MediaPipe Face Landmarker** para segmentação facial (utilizado em todos os módulos).
 - **ONNX Runtime Web** apenas no módulo Acne (único com modelo ML).
 - **jsPDF** para exportação de relatórios.
@@ -476,4 +476,21 @@ Este é um documento organizacional. Os detalhes científicos e técnicos de cad
 
 ---
 
-*Fim do documento master. Versão 1.0 — 17 de abril de 2026.*
+---
+
+## 10. Decisões de Arquitetura Tomadas Durante a Execução
+
+| Decisão | Valor original | Valor real | Motivo |
+|---|---|---|---|
+| Versão do Next.js | 14+ | 16.2.4 | `create-next-app` v16 instalado por padrão; compatível e superior |
+| Versão do Tailwind | v3 (implícito) | v4 (CSS-first) | `create-next-app` v16 instala Tailwind v4 por padrão; design system em CSS custom properties é compatível nativamente |
+| `tailwind.config.ts` | Presente, com `theme.extend` | Ausente | Tailwind v4 usa `@theme` em CSS — sem arquivo de config JS/TS |
+| `darkMode: 'class'` | Config no `tailwind.config.ts` | `@custom-variant dark (&:is(.dark *))` em `globals.css` | Equivalente funcional no Tailwind v4 |
+| Modo claro/escuro | Toggle light/dark | Dark-only no MVP | Decisão explícita do usuário (17/04/2026). Light mode fica no backlog. A classe `.dark` é aplicada fixamente no `<html>`. |
+| `next.config.js` | `.js` | `.ts` | `create-next-app` v16 gera `.ts` por padrão; sem impacto |
+
+*Fase 1 — Sessão 1, 17 de abril de 2026.*
+
+---
+
+*Fim do documento master. Versão 1.1 — 17 de abril de 2026.*

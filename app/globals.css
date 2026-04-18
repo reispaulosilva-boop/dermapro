@@ -1,3 +1,11 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
-/* Design tokens e estilos globais serão aplicados no Bloco 3 */
+/*
+  Dark-only MVP. Aplicamos a classe .dark no <html> via layout.tsx.
+  A variante dark: do Tailwind aponta para elementos dentro de .dark.
+  Futura adição de light mode: remover .dark do html e adicionar toggle.
+*/
+@custom-variant dark (&:is(.dark *));
+
+/* Design tokens (primitivas + aliases semânticos) serão inseridos no Bloco 3. */
