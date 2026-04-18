@@ -4,10 +4,7 @@
  * Extrai Regiões de Interesse (ROIs) da pele a partir dos 478 landmarks do
  * MediaPipe Face Landmarker (468 mesh + 10 iris).
  *
- * ATENÇÃO sobre índices:
- * Os grupos de índices abaixo são aproximações derivadas da topologia do mesh.
  * Referência: https://github.com/google/mediapipe/blob/master/mediapipe/modules/face_geometry/data/canonical_face_model_uv_visualization.png
- * TODO: Validar visualmente com scans reais antes da entrega dos módulos.
  */
 
 // ─── TIPOS ────────────────────────────────────────────────────────────────────
@@ -21,28 +18,50 @@ export type SkinROI = {
   bbox: { x1: number; y1: number; x2: number; y2: number };
 };
 
-// ─── ÍNDICES DE LANDMARKS (aproximados) ──────────────────────────────────────
+// ─── ÍNDICES DE LANDMARKS ────────────────────────────────────────────────────
 
 // Contorno facial externo (face oval)
 const IDX_FACE_OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109] as const;
 
-// Testa: top do face oval até linha das sobrancelhas
-const IDX_FOREHEAD_TOP  = [10,338,297,332,284,251,21,54,103,67,109] as const;
-const IDX_RIGHT_BROW    = [46,53,52,65,55,70,63,105,66,107] as const; // sobrancelha direita (viewer)
-const IDX_LEFT_BROW     = [276,283,282,295,285,300,293,334,296,336] as const; // sobrancelha esquerda (viewer)
+// Testa: hairline direita → temporal direita → sobrancelhas → glabela → sobrancelhas esq → temporal esq
+const IDX_FOREHEAD = [
+  10, 338, 297, 332, 284, 251,        // hairline: centro → têmpora direita
+  21, 54, 103, 67, 109,               // temporal direita (conservador)
+  46, 70, 63, 105, 66, 107,           // sobrancelha direita: externo → interno
+  55, 8, 285,                          // glabela
+  336, 296, 334, 293, 300, 276,       // sobrancelha esquerda: interno → externo
+  389, 356,                            // pontos de transição para fechar hairline
+] as const;
 
-// Bochechas
-const IDX_LEFT_CHEEK    = [123,50,117,118,119,120,121,128,234,127,162,21,54,103,67,109,10,338,297,332,284,251,389,356,454,323] as const;
-const IDX_RIGHT_CHEEK   = [352,280,346,347,348,349,350,357,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234] as const;
+// Bochechas — polígonos completos cobrindo área infraorbital + malar + mandibular
+const IDX_LEFT_CHEEK_POLY = [
+  116, 123, 147, 213, 192, 214, 210, 211, 32, 208,
+  199, 175, 152, 148, 176, 149, 150, 187, 207, 216,
+  206, 205, 36, 142, 126, 203, 98, 97, 49, 131, 134, 51, 5,
+] as const;
 
-// Queixo
-const IDX_CHIN = [175,199,200,199,175,152,377,378,400,148,176] as const;
+const IDX_RIGHT_CHEEK_POLY = [
+  345, 346, 347, 348, 349, 350,        // infraorbital direita
+  451, 452, 453, 464,                  // lateral nasal esquerda da foto
+  435, 401, 366, 376, 352,             // lateral descendo
+  411, 447, 454, 323, 361,             // mandibular (duplicatas 352 e 345 removidas)
+  356, 389, 251, 284,                  // transição superior de volta
+] as const;
+
+// Queixo — de abaixo do lábio até ponta do queixo, com laterais
+const IDX_CHIN_POLY = [
+  61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291,   // contorno da boca inferior
+  287, 273, 335, 406, 313, 421, 418, 424, 422,           // lateral direita descendo
+  152, 148, 176, 149, 150,                                // ponta do queixo
+  194, 201, 200, 199, 175,                                // lateral esquerda subindo
+  83, 182, 106, 43, 57,                                   // voltar à boca
+] as const;
 
 // Nariz (base e laterais, sem narinas)
-const IDX_NOSE_BASE = [1,2,98,97,326,327,4,5,197,195,6,168] as const;
-// Narinas (holes a subtrair)
-const IDX_NARIS_RIGHT = [49,48,64,98,97,2] as const;
-const IDX_NARIS_LEFT  = [279,278,294,327,326,2] as const;
+const IDX_NOSE_BASE_POLY = [8, 9, 168, 6, 197, 195, 5, 4, 19, 94, 2, 164, 393, 417] as const;
+// Narinas (holes) — ponto 2 removido para evitar holes que se tocam na ponta
+const IDX_NARIS_RIGHT = [49, 48, 64, 98, 97] as const;
+const IDX_NARIS_LEFT  = [279, 278, 294, 327, 326] as const;
 
 // Região supralabial (filtrum + área acima dos lábios) — usado em melasma
 const IDX_SUPRALABIAL = [0,37,39,40,185,61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0] as const;
@@ -142,17 +161,7 @@ export function extractForeheadROI(
   width: number,
   height: number,
 ): SkinROI {
-  // Topo do face oval (hairline) + sobrancelhas como limite inferior
-  const topPoints = indicesToPolygon(IDX_FOREHEAD_TOP, landmarks, width, height);
-  const rightBrow = indicesToPolygon(IDX_RIGHT_BROW, landmarks, width, height);
-  const leftBrow  = indicesToPolygon(IDX_LEFT_BROW, landmarks, width, height);
-  // Polígono: hairline direita → sobrancelha dir. (invertida) → sobrancelha esq. → hairline esq.
-  const polygon = [
-    ...topPoints.slice(0, 6),
-    ...rightBrow.slice().reverse(),
-    ...leftBrow,
-    ...topPoints.slice(6),
-  ];
+  const polygon = indicesToPolygon(IDX_FOREHEAD, landmarks, width, height);
   return { name: 'forehead', polygon, bbox: polygonToBbox(polygon) };
 }
 
@@ -161,21 +170,8 @@ export function extractLeftCheekROI(
   width: number,
   height: number,
 ): SkinROI {
-  // Simplified cheek polygon — TODO: refinar com landmarks de zigomático
-  const polygon = [
-    lmToPx(landmarks[234] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[93]  ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[132] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[58]  ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[172] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[136] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[150] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[149] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[176] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[148] ?? { x: 0, y: 0 }, width, height),
-  ];
-  const holes = [indicesToPolygon(IDX_RIGHT_EYE, landmarks, width, height)];
-  return { name: 'leftCheek', polygon, holes, bbox: polygonToBbox(polygon) };
+  const polygon = indicesToPolygon(IDX_LEFT_CHEEK_POLY, landmarks, width, height);
+  return { name: 'leftCheek', polygon, bbox: polygonToBbox(polygon) };
 }
 
 export function extractRightCheekROI(
@@ -183,20 +179,8 @@ export function extractRightCheekROI(
   width: number,
   height: number,
 ): SkinROI {
-  const polygon = [
-    lmToPx(landmarks[454] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[323] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[361] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[288] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[397] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[365] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[379] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[378] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[400] ?? { x: 0, y: 0 }, width, height),
-    lmToPx(landmarks[377] ?? { x: 0, y: 0 }, width, height),
-  ];
-  const holes = [indicesToPolygon(IDX_LEFT_EYE, landmarks, width, height)];
-  return { name: 'rightCheek', polygon, holes, bbox: polygonToBbox(polygon) };
+  const polygon = indicesToPolygon(IDX_RIGHT_CHEEK_POLY, landmarks, width, height);
+  return { name: 'rightCheek', polygon, bbox: polygonToBbox(polygon) };
 }
 
 export function extractChinROI(
@@ -204,7 +188,7 @@ export function extractChinROI(
   width: number,
   height: number,
 ): SkinROI {
-  const polygon = indicesToPolygon(IDX_CHIN, landmarks, width, height);
+  const polygon = indicesToPolygon(IDX_CHIN_POLY, landmarks, width, height);
   return { name: 'chin', polygon, bbox: polygonToBbox(polygon) };
 }
 
@@ -213,7 +197,7 @@ export function extractNoseROI(
   width: number,
   height: number,
 ): SkinROI {
-  const polygon = indicesToPolygon(IDX_NOSE_BASE, landmarks, width, height);
+  const polygon = indicesToPolygon(IDX_NOSE_BASE_POLY, landmarks, width, height);
   const holes = [
     indicesToPolygon(IDX_NARIS_RIGHT, landmarks, width, height),
     indicesToPolygon(IDX_NARIS_LEFT,  landmarks, width, height),
