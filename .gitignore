@@ -39,6 +39,10 @@ yarn-error.log*
 *.onnx
 *.task
 
+# scripts — ambiente virtual e artefatos gerados localmente
+scripts/.venv/
+scripts/output/
+
 # vercel
 .vercel
 
