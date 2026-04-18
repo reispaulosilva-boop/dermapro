@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   computeLaplacianVariance, computeAvgBrightness, computeSideBias, runQualityChecks,
+  QA_BLUR_ERROR, QA_BLUR_WARN,
 } from './imageQuality';
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -119,11 +120,73 @@ describe('runQualityChecks', () => {
     expect(result.warnings.length).toBeGreaterThan(0);
   });
 
-  it('imagem uniforme (sem foco) → error por blur score baixo', () => {
+  it('imagem uniforme com blurError=100 → error bloqueante', () => {
     const canvas = makeCanvas(128, 128, 128, 50, 50);
-    const result = runQualityChecks(canvas, { minWidth: 10, minHeight: 10, maxBlurScore: 100 });
+    const result = runQualityChecks(canvas, { minWidth: 10, minHeight: 10, blurErrorThreshold: 100 });
     expect(result.passed).toBe(false);
-    expect(result.errors.some(e => e.includes('borrada'))).toBe(true);
+    expect(result.errors.some(e => e.includes('inutilizável'))).toBe(true);
+  });
+
+  // ─── DOIS TIERS DE BLUR ─────────────────────────────────────────────────────
+
+  it('blur 50 (entre QA_BLUR_ERROR=40 e QA_BLUR_WARN=80) → warning, não error', () => {
+    // Imagem uniforme tem blurScore ≈ 0 — usamos thresholds fictícios para simular
+    // a lógica dos dois tiers sem depender da escala absoluta do Laplaciano.
+    const canvas = makeCanvas(128, 128, 128, 50, 50);
+    // blurScore da imagem uniforme ≈ 0; definimos errorThreshold=0 e warnThreshold=1
+    // para verificar que score < warnThreshold gera warning, não error
+    const result = runQualityChecks(canvas, {
+      minWidth: 10, minHeight: 10,
+      blurErrorThreshold: 0,   // ≤ blurScore: sem error
+      blurWarnThreshold: 1,    // > blurScore: gera warning
+    });
+    expect(result.passed).toBe(true);
+    expect(result.errors.filter(e => e.includes('inutilizável'))).toHaveLength(0);
+    expect(result.warnings.some(w => w.includes('foco reduzido'))).toBe(true);
+  });
+
+  it('blur abaixo de blurErrorThreshold → error bloqueante (foto inutilizável)', () => {
+    const canvas = makeCanvas(128, 128, 128, 50, 50);
+    // blurScore ≈ 0; errorThreshold=1 → blurScore < errorThreshold → error
+    const result = runQualityChecks(canvas, {
+      minWidth: 10, minHeight: 10,
+      blurErrorThreshold: 1,
+      blurWarnThreshold: 100,
+    });
+    expect(result.passed).toBe(false);
+    expect(result.errors.some(e => e.includes('inutilizável'))).toBe(true);
+    expect(result.warnings.filter(w => w.includes('foco'))).toHaveLength(0);
+  });
+
+  it('blur acima de blurWarnThreshold → sem avisos de foco', () => {
+    // Imagem xadrez tem blurScore alto; errorThreshold e warnThreshold baixos
+    const w = 20, h = 20;
+    const canvas = {
+      width: w, height: h,
+      getContext: () => ({
+        getImageData: () => {
+          const data = new Uint8ClampedArray(w * h * 4);
+          for (let i = 0; i < w * h; i++) {
+            const x = i % w, y = Math.floor(i / w);
+            const v = (x + y) % 2 === 0 ? 0 : 255;
+            data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = v;
+            data[i * 4 + 3] = 255;
+          }
+          return { data, width: w, height: h } as ImageData;
+        },
+      }),
+    } as unknown as HTMLCanvasElement;
+    const result = runQualityChecks(canvas, {
+      minWidth: 10, minHeight: 10,
+      blurErrorThreshold: QA_BLUR_ERROR,
+      blurWarnThreshold:  QA_BLUR_WARN,
+    });
+    expect(result.warnings.filter(w => w.includes('foco'))).toHaveLength(0);
+    expect(result.errors.filter(e => e.includes('inutilizável'))).toHaveLength(0);
+  });
+
+  it('constantes exportadas: QA_BLUR_ERROR < QA_BLUR_WARN', () => {
+    expect(QA_BLUR_ERROR).toBeLessThan(QA_BLUR_WARN);
   });
 
   it('imagem boa (grande, bem iluminada) → passed=true, warnings vazios', () => {

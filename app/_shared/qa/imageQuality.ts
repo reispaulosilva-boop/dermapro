@@ -32,10 +32,18 @@ export type QualityCheckResult = {
 export type QualityCheckOptions = {
   minWidth: number;
   minHeight: number;
-  maxBlurScore?: number;     // erro se blurScore < maxBlurScore (imagem muito borrada)
-  minBrightness?: number;    // warning se avgBrightness < minBrightness
-  maxBrightness?: number;    // warning se avgBrightness > maxBrightness
-  maxSideBias?: number;      // warning se sideBias > maxSideBias
+  /**
+   * Dois tiers de blur — permite julgamento clínico:
+   *   blurErrorThreshold: abaixo disso → error bloqueante (foto inutilizável).
+   *   blurWarnThreshold:  abaixo disso → warning informativo (foto usável com ressalva).
+   * Calibração para fotos reais de consultório (iPhone HEIC→JPG, pele oleosa):
+   *   error < 40, warn < 80.
+   */
+  blurErrorThreshold?: number;   // default recomendado: 40
+  blurWarnThreshold?:  number;   // default recomendado: 80
+  minBrightness?: number;        // warning se avgBrightness < minBrightness
+  maxBrightness?: number;        // warning se avgBrightness > maxBrightness
+  maxSideBias?:   number;        // warning se sideBias > maxSideBias
 };
 
 // ─── FUNÇÕES PURAS ───────────────────────────────────────────────────────────
@@ -130,6 +138,18 @@ function toGray(imageData: ImageData): Uint8ClampedArray {
   return gray;
 }
 
+// ─── THRESHOLDS CALIBRADOS PARA CONSULTÓRIO ──────────────────────────────────
+// Calibrados para fotos reais de consultório: iPhone/Android HEIC→JPG,
+// pele oleosa (reduz variância do Laplaciano), compressão agressiva.
+// Decisão de produto (18/04/2026): DermaPro apoia julgamento clínico — warnings
+// informam, mas não bloqueiam. Apenas errors (foto literalmente inutilizável) bloqueiam.
+
+export const QA_BLUR_ERROR   = 40;   // abaixo → error bloqueante
+export const QA_BLUR_WARN    = 80;   // abaixo → warning informativo
+export const QA_BRIGHT_MIN   = 30;   // abaixo → warning (muito escuro)
+export const QA_BRIGHT_MAX   = 230;  // acima  → warning (sobreexposto)
+export const QA_SIDE_BIAS_MAX = 40;  // acima  → warning (iluminação assimétrica)
+
 // ─── PONTO DE ENTRADA ─────────────────────────────────────────────────────────
 
 /**
@@ -170,9 +190,17 @@ export function runQualityChecks(
   const sideBias      = computeSideBias(imageData);
   const aspectRatio   = height > 0 ? width / height : 0;
 
-  // Foco
-  if (opts.maxBlurScore !== undefined && blurScore < opts.maxBlurScore) {
-    errors.push(`Imagem muito borrada (score ${blurScore.toFixed(1)}, mínimo ${opts.maxBlurScore}).`);
+  // Foco — dois tiers: error (inutilizável) e warning (usável com ressalva)
+  if (opts.blurErrorThreshold !== undefined && blurScore < opts.blurErrorThreshold) {
+    errors.push(
+      `Imagem inutilizável por falta de foco (score ${blurScore.toFixed(1)}, mínimo ${opts.blurErrorThreshold}).`,
+    );
+  } else if (opts.blurWarnThreshold !== undefined && blurScore < opts.blurWarnThreshold) {
+    warnings.push(
+      `Imagem com foco reduzido (score ${blurScore.toFixed(1)}). ` +
+      `Pele oleosa, compressão JPEG ou conversão HEIC podem reduzir o score. ` +
+      `A análise prosseguirá; interprete resultados com atenção adicional.`,
+    );
   }
 
   // Brilho

@@ -13,8 +13,10 @@ import {
   extractNoseROI,
 } from '@/app/_shared/ml/roiExtractor';
 import type { SkinROI } from '@/app/_shared/ml/roiExtractor';
-import { runQualityChecks } from '@/app/_shared/qa/imageQuality';
+import { runQualityChecks, QA_BLUR_ERROR, QA_BLUR_WARN, QA_BRIGHT_MIN, QA_BRIGHT_MAX, QA_SIDE_BIAS_MAX } from '@/app/_shared/qa/imageQuality';
 import { MIN_UPLOAD_WIDTH, MIN_UPLOAD_HEIGHT } from '../_lib/constants';
+// TODO (Bloco 9): ao gerar o PDF, registrar qa.warnings caso não-vazio:
+// "Análise realizada sobre imagem com qualidade subótima: [lista]. Interprete com reserva adicional."
 import ROIValidationCanvas from './ROIValidationCanvas';
 import ROIValidationControls from './ROIValidationControls';
 
@@ -57,15 +59,21 @@ export default function ROIValidationFlow({ onValidated }: ROIValidationFlowProp
   const handleFileSelected = useCallback(async (_file: File, bitmap: ImageBitmap) => {
     setState(s => ({ ...s, step: 'processing', imageBitmap: bitmap, errors: [], warnings: [] }));
 
-    // 1. Quality check
+    // 1. Quality check — dois tiers: errors bloqueiam, warnings apenas informam.
+    // Decisão de produto: DermaPro apoia julgamento clínico, não substitui.
     const qaCanvas = bitmapToCanvas(bitmap);
     const qa = runQualityChecks(qaCanvas, {
-      minWidth:     MIN_UPLOAD_WIDTH,
-      minHeight:    MIN_UPLOAD_HEIGHT,
-      maxBlurScore: 80,
+      minWidth:           MIN_UPLOAD_WIDTH,
+      minHeight:          MIN_UPLOAD_HEIGHT,
+      blurErrorThreshold: QA_BLUR_ERROR,
+      blurWarnThreshold:  QA_BLUR_WARN,
+      minBrightness:      QA_BRIGHT_MIN,
+      maxBrightness:      QA_BRIGHT_MAX,
+      maxSideBias:        QA_SIDE_BIAS_MAX,
     });
 
-    if (!qa.passed) {
+    // Só errors bloqueiam — warnings passam com banner informativo
+    if (qa.errors.length > 0) {
       setState(s => ({ ...s, step: 'error', errors: qa.errors, warnings: qa.warnings }));
       return;
     }
