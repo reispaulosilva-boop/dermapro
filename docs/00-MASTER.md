@@ -487,6 +487,7 @@ Este é um documento organizacional. Os detalhes científicos e técnicos de cad
 | `tailwind.config.ts` | Presente, com `theme.extend` | Ausente | Tailwind v4 usa `@theme` em CSS — sem arquivo de config JS/TS |
 | `darkMode: 'class'` | Config no `tailwind.config.ts` | `@custom-variant dark (&:is(.dark *))` em `globals.css` | Equivalente funcional no Tailwind v4 |
 | Modo claro/escuro | Toggle light/dark | Dark-only no MVP | Decisão explícita do usuário (17/04/2026). Light mode fica no backlog. A classe `.dark` é aplicada fixamente no `<html>`. |
+| Dark-only confirmado | — | Validado visualmente no Bloco 9 (18/04/2026) | Hub aprovado com dark-only. Light mode / toggle dark-light são backlog pós-MVP, a ser decidido após uso real em consultório com espelhamento Apple TV. |
 | `next.config.js` | `.js` | `.ts` | `create-next-app` v16 gera `.ts` por padrão; sem impacto |
 
 *Fase 1 — Sessão 1, 17 de abril de 2026.*
