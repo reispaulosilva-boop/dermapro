@@ -1,11 +1,275 @@
+/*
+ * DermaPro — Estilos Globais
+ *
+ * HIERARQUIA DE TOKENS:
+ *   1. design/tokens.css  — PRIMITIVAS CSS cruas (--ink-*, --primary-*, etc.)
+ *                           Source of truth. Não editar.
+ *   2. :root abaixo       — ALIASES SEMÂNTICOS (--bg-surface, --text-strong, etc.)
+ *                           Mapeiam primitivas para significado de uso.
+ *   3. @theme inline      — INTEGRAÇÃO TAILWIND v4. Registra utilitários
+ *                           (bg-surface, text-strong, rounded-md, etc.)
+ *                           Usa @theme inline para referenciar vars sem duplicar :root.
+ *
+ * DARK-ONLY MVP: classe `.dark` aplicada fixamente no <html> via layout.tsx.
+ * A variante `dark:` do Tailwind funciona via @custom-variant abaixo.
+ * Para adicionar light mode futuramente: remover classe .dark do html,
+ * criar @layer base com overrides de variáveis e adicionar o toggle.
+ */
+
 @import "tailwindcss";
+@import "../design/tokens.css";
+
 @plugin "tailwindcss-animate";
 
-/*
-  Dark-only MVP. Aplicamos a classe .dark no <html> via layout.tsx.
-  A variante dark: do Tailwind aponta para elementos dentro de .dark.
-  Futura adição de light mode: remover .dark do html e adicionar toggle.
-*/
+/* Variante dark aponta para elementos dentro de .dark (aplicado no <html>) */
 @custom-variant dark (&:is(.dark *));
 
-/* Design tokens (primitivas + aliases semânticos) serão inseridos no Bloco 3. */
+/* ─── OVERRIDES DE FONTE (next/font via CSS vars do layout.tsx) ────────────── */
+/*
+ * tokens.css define --font-sans com o nome literal 'DM Sans'.
+ * Aqui sobrescrevemos para usar a versão carregada pelo next/font
+ * (--font-dm-sans), com fallback para o nome literal caso o carregamento falhe.
+ */
+:root {
+  --font-sans: var(--font-dm-sans, 'DM Sans'), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains-mono, 'JetBrains Mono'), ui-monospace, Menlo, monospace;
+}
+
+/* ─── INTEGRAÇÃO TAILWIND v4 ────────────────────────────────────────────────── */
+/*
+ * @theme inline: não adiciona vars ao :root (evita conflito com tokens.css).
+ * Gera utilitários Tailwind que referenciam nossas CSS vars em tempo de execução.
+ *
+ * Exemplos de utilitários gerados:
+ *   bg-canvas, bg-surface, bg-elevated, bg-border
+ *   text-strong, text-body, text-muted, text-faint
+ *   bg-primary-500, bg-acne, bg-melasma, etc.
+ *   font-sans, font-mono
+ *   rounded-sm, rounded-md, rounded-lg, rounded-xl
+ *   shadow-sm, shadow-md, shadow-lg
+ */
+@theme inline {
+  /* Fontes */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  /* Superfícies dark */
+  --color-canvas:   var(--ink-1);    /* bg-canvas  → #11141a */
+  --color-surface:  var(--ink-2);    /* bg-surface → #161a21 */
+  --color-elevated: var(--ink-3);    /* bg-elevated → #1d222b */
+  --color-border:   var(--ink-4);    /* bg-border → #262c37 */
+
+  /* Textos dark */
+  --color-strong: var(--ink-11);   /* text-strong → #f4f6f9 */
+  --color-body:   var(--ink-10);   /* text-body → #e7eaef */
+  --color-muted:  var(--ink-8);    /* text-muted → #9ba3b2 */
+  --color-faint:  var(--ink-6);    /* text-faint → #4b5364 */
+
+  /* Ink scale completa */
+  --color-ink-0:  var(--ink-0);
+  --color-ink-1:  var(--ink-1);
+  --color-ink-2:  var(--ink-2);
+  --color-ink-3:  var(--ink-3);
+  --color-ink-4:  var(--ink-4);
+  --color-ink-5:  var(--ink-5);
+  --color-ink-6:  var(--ink-6);
+  --color-ink-7:  var(--ink-7);
+  --color-ink-8:  var(--ink-8);
+  --color-ink-9:  var(--ink-9);
+  --color-ink-10: var(--ink-10);
+  --color-ink-11: var(--ink-11);
+
+  /* Primária */
+  --color-primary-50:  var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+
+  /* Acento âmbar */
+  --color-amber-300: var(--amber-300);
+  --color-amber-400: var(--amber-400);
+  --color-amber-500: var(--amber-500);
+
+  /* Semânticas */
+  --color-info:       var(--info);
+  --color-success:    var(--success);
+  --color-attention:  var(--attention);
+  --color-alert:      var(--alert);
+
+  /* Módulos */
+  --color-acne:       var(--mod-acne);
+  --color-melasma:    var(--mod-melasma);
+  --color-textura:    var(--mod-texture);
+  --color-linhas:     var(--mod-signs);
+  --color-rosacea:    var(--mod-rosacea);
+  --color-estrutura:  var(--mod-struct);
+
+  /* Raios */
+  --radius-sm:   var(--r-sm);
+  --radius-md:   var(--r-md);
+  --radius-lg:   var(--r-lg);
+  --radius-xl:   var(--r-xl);
+  --radius-full: var(--r-full);
+
+  /* Sombras */
+  --shadow-sm: var(--shadow-1);
+  --shadow-md: var(--shadow-2);
+  --shadow-lg: var(--shadow-3);
+}
+
+/* ─── ALIASES SEMÂNTICOS CSS ────────────────────────────────────────────────── */
+/*
+ * Mapeamento de primitivas para nomes de uso.
+ * Estes vars são os que os componentes (e os mockups em design/uploads/) referencial.
+ * Cada alias documenta: primitiva → alias → uso.
+ */
+:root {
+  /* --- Superfícies (dark mode) --- */
+  --bg-canvas:     var(--ink-1);  /* #11141a — fundo da página */
+  --bg-surface:    var(--ink-2);  /* #161a21 — cards e painéis */
+  --bg-elevated:   var(--ink-3);  /* #1d222b — hover / estado elevado */
+  --border-subtle: var(--ink-4);  /* #262c37 — bordas sutis */
+
+  /* --- Texto (dark mode) --- */
+  --text-strong: var(--ink-11); /* #f4f6f9 — títulos e texto de alta ênfase */
+  --text-body:   var(--ink-10); /* #e7eaef — texto principal */
+  --text-muted:  var(--ink-8);  /* #9ba3b2 — texto secundário */
+  --text-faint:  var(--ink-6);  /* #4b5364 — texto desabilitado/muito sutil */
+
+  /* --- Fontes (aliases usados pelos mockups JSX) --- */
+  --ff-sans: var(--font-sans);
+  --ff-mono: var(--font-mono);
+
+  /* --- Brand primária (azul-petróleo) --- */
+  --brand-primary-50:  var(--primary-50);
+  --brand-primary-100: var(--primary-100);
+  --brand-primary-200: var(--primary-200);
+  --brand-primary-600: var(--primary-600);
+  /*
+   * 700 = base do botão primário (conforme components.css .btn-primary usa primary-500).
+   * 800 = hover do botão (em dark mode, hover = mais claro, portanto primary-400).
+   */
+  --brand-primary-700: var(--primary-500);  /* #1f5962 — base */
+  --brand-primary-800: var(--primary-400);  /* #35767f — hover (mais claro em dark) */
+
+  /* --- Brand acento (âmbar) --- */
+  --brand-accent-400: var(--amber-300);  /* #e3c07a — hover */
+  --brand-accent-500: var(--amber-400);  /* #d2a556 — base */
+
+  /* --- Cores semânticas (prefixo sem- para evitar conflito com tokens.css) --- */
+  --sem-info:         var(--info);
+  --sem-success:      var(--success);
+  --sem-attention:    var(--attention);
+  --sem-alert:        var(--alert);
+  --sem-info-bg:      var(--info-bg);
+  --sem-success-bg:   var(--success-bg);
+  --sem-attention-bg: var(--attention-bg);
+  --sem-alert-bg:     var(--alert-bg);
+
+  /* --- Módulos — aliases de nome (mockups usam "textura" e "expression") --- */
+  --mod-textura:    var(--mod-texture);  /* tokens.css chama "texture" */
+  --mod-expression: var(--mod-signs);   /* tokens.css chama "signs"; módulo id = "linhas" */
+
+  /* --- Módulos — variantes soft (bg de ícones e trilhas de barras) --- */
+  /* Não existem em tokens.css; derivadas como rgba(cor_base, 0.15) sobre surface dark. */
+  --mod-acne-soft:       rgba(201, 125, 106, 0.15);
+  --mod-melasma-soft:    rgba(183, 138,  90, 0.15);
+  --mod-texture-soft:    rgba(110, 154, 142, 0.15);
+  --mod-textura-soft:    rgba(110, 154, 142, 0.15);  /* alias de nome */
+  --mod-signs-soft:      rgba(138, 123, 168, 0.15);
+  --mod-expression-soft: rgba(138, 123, 168, 0.15);  /* alias de nome */
+  --mod-rosacea-soft:    rgba(168, 119, 128, 0.15);
+  --mod-struct-soft:     rgba(122, 138, 160, 0.15);
+
+  /* --- Overlays — variantes stroke (bordas de shapes sobre a foto) --- */
+  /* Não existem em tokens.css; derivadas com opacidade maior que o fill. */
+  --overlay-lesion-stroke:  rgba(226, 138, 123, 0.85);
+  --overlay-pigment-stroke: rgba(188, 140,  92, 0.70);
+  --overlay-shine-stroke:   rgba(238, 213, 140, 0.70);
+
+  /* --- Sombras (aliases sh-* usados pelos mockups) --- */
+  --sh-xs:   var(--shadow-1);  /* 0 1px 2px ... */
+  --sh-sm:   var(--shadow-1);
+  --sh-md:   var(--shadow-2);  /* 0 4px 16px ... */
+  --sh-xl:   var(--shadow-3);  /* 0 12px 40px ... */
+  --sh-glow: var(--shadow-glow);
+
+  /* --- Raio extra (alias de nome) --- */
+  --r-pill: var(--r-full);  /* 999px — mesmo que r-full, nome usado em overlays */
+
+  /* --- Motion (aliases numerados usados pelos mockups) --- */
+  --ease:  var(--ease-out);
+  --dur-1: var(--dur-fast);  /* 140ms */
+  --dur-2: var(--dur-base);  /* 220ms */
+  --dur-3: var(--dur-slow);  /* 380ms */
+
+  /*
+   * Escala neutral (0=branco → 1000=quase-preto).
+   *
+   * ATENÇÃO: esta escala NÃO corresponde aos --ink-* (que são dark-first).
+   * É uma paleta de cinzas independente, usada principalmente pelo PresentationMode
+   * (fundo neutral-1000 = quase-preto, texto neutral-100 = quase-branco).
+   *
+   * Para o app principal em dark mode, use --ink-* ou aliases --bg-surface/--text-strong.
+   * Os componentes React usarão classes Tailwind (bg-surface, text-strong, etc.),
+   * não os --neutral-* diretamente.
+   */
+  --neutral-0:    #ffffff;
+  --neutral-50:   #f8f9fa;
+  --neutral-100:  #f0f1f3;
+  --neutral-150:  #e4e6ea;
+  --neutral-200:  #d2d5dc;
+  --neutral-300:  #adb2be;
+  --neutral-400:  #868d9c;
+  --neutral-500:  #636b7c;
+  --neutral-700:  #404754;
+  --neutral-800:  #2a2f3a;
+  --neutral-1000: #0b0d10;  /* = ink-0; fundo do PresentationMode */
+
+  /* --- TV / Modo Apresentação --- */
+  --tv-h1: calc(var(--fs-h1) * 1.2);  /* 40px × 1.2 = 48px */
+}
+
+/* ─── BASE ───────────────────────────────────────────────────────────────────── */
+
+body {
+  background: var(--bg-canvas);
+  color: var(--text-body);
+  font-family: var(--ff-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  font-weight: var(--fw-regular);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01" 1, "cv11" 1;
+}
+
+/* ─── MODO APRESENTAÇÃO ──────────────────────────────────────────────────────── */
+/*
+ * Aplicado via document.body.classList.toggle('presentation-mode').
+ * Ativado pelo componente PresentationModeToggle (atalho tecla P).
+ *
+ * [data-chrome] marca header, menu e footer — ocultos neste modo.
+ */
+.presentation-mode {
+  font-size: calc(1em * 1.2);
+}
+
+.presentation-mode [data-chrome] {
+  display: none !important;
+}
+
+/* ─── UTILITÁRIOS GLOBAIS ────────────────────────────────────────────────────── */
+
+/* Suaviza foco para mouse, mantém para teclado */
+:focus-visible {
+  outline: 2px solid var(--primary-400);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
