@@ -23,7 +23,7 @@ export const MODELS: Record<string, ModelConfig> = {
 };
 
 /** Mudar para true se modelo real não estiver disponível — ativa detector simulado */
-export const USE_STUB_DETECTOR = true;
+export const USE_STUB_DETECTOR = false;
 
 export function getModelConfig(id: string): ModelConfig {
   const config = MODELS[id];
