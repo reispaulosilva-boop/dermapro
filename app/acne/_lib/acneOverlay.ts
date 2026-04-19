@@ -1,6 +1,6 @@
 'use client';
 
-// TODO (Bloco 7): implementar estilos de overlay das bounding boxes
+import type { Detection } from '@/app/_shared/ml/yolo';
 
 export interface OverlayStyle {
   strokeColor: string;
@@ -10,15 +10,50 @@ export interface OverlayStyle {
   labelFontSize: number;
 }
 
-/** Retorna o estilo de overlay para bboxes de acne.
- *  Em modo apresentação (presentationMode=true), lineWidth e labelFontSize são amplificados. */
 export function getAcneOverlayStyle(presentationMode: boolean): OverlayStyle {
-  // TODO (Bloco 7): implementar usando tokens --overlay-lesion-stroke e --mod-acne
   return {
-    strokeColor:    'var(--overlay-lesion-stroke)',
-    fillColor:      'var(--overlay-lesion)',
-    lineWidth:      presentationMode ? 3 : 2,
-    cornerRadius:   4,
-    labelFontSize:  presentationMode ? 13 : 11,
+    strokeColor:   'rgba(226, 138, 123, 0.85)',
+    fillColor:     'rgba(226, 138, 123, 0.08)',
+    lineWidth:     presentationMode ? 3 : 2,
+    cornerRadius:  4,
+    labelFontSize: presentationMode ? 13 : 11,
   };
+}
+
+export function drawBboxesOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  detections: Detection[],
+  style: OverlayStyle,
+  showLabels: boolean,
+): void {
+  for (const det of detections) {
+    const [x1, y1, x2, y2] = det.bbox;
+    const w = x2 - x1;
+    const h = y2 - y1;
+    const r = Math.min(style.cornerRadius, w / 2, h / 2);
+
+    ctx.beginPath();
+    ctx.moveTo(x1 + r, y1);
+    ctx.lineTo(x2 - r, y1);
+    ctx.arcTo(x2, y1, x2, y1 + r, r);
+    ctx.lineTo(x2, y2 - r);
+    ctx.arcTo(x2, y2, x2 - r, y2, r);
+    ctx.lineTo(x1 + r, y2);
+    ctx.arcTo(x1, y2, x1, y2 - r, r);
+    ctx.lineTo(x1, y1 + r);
+    ctx.arcTo(x1, y1, x1 + r, y1, r);
+    ctx.closePath();
+
+    ctx.fillStyle = style.fillColor;
+    ctx.fill();
+    ctx.strokeStyle = style.strokeColor;
+    ctx.lineWidth = style.lineWidth;
+    ctx.stroke();
+
+    if (showLabels) {
+      ctx.font = `${style.labelFontSize}px system-ui, sans-serif`;
+      ctx.fillStyle = style.strokeColor;
+      ctx.fillText(`${Math.round(det.score * 100)}%`, x1 + 3, y1 - 3);
+    }
+  }
 }
