@@ -43,15 +43,16 @@ function drawROIPolygons(
   sx: number,
   sy: number,
 ) {
+  ctx.beginPath(); // um único path acumula todos os sub-polígonos
   for (const polygon of polygons) {
     if (polygon.length === 0) continue;
-    ctx.beginPath();
     ctx.moveTo(polygon[0]!.x * sx, polygon[0]!.y * sy);
     for (let i = 1; i < polygon.length; i++) {
       ctx.lineTo(polygon[i]!.x * sx, polygon[i]!.y * sy);
     }
-    ctx.closePath();
+    ctx.closePath(); // fecha sub-polígono, não o path inteiro
   }
+  // fill('evenodd') chamado pelo caller — suporta furos automaticamente
 }
 
 export default function ROIValidationCanvas({
