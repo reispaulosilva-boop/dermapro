@@ -1,5 +1,5 @@
-export { preprocessImageForYOLO } from './yoloPreprocess';
-export type { PreprocessResult } from './yoloPreprocess';
+export { preprocessImageForYOLO, computeLetterboxParams, imageDataToTensor } from './yoloPreprocess';
+export type { PreprocessResult, LetterboxParams } from './yoloPreprocess';
 
 export {
   decodeYolov8Output,
