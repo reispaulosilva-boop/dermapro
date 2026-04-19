@@ -12,7 +12,9 @@ import {
   downloadReducer,
   INITIAL_STATE,
   httpErrorMessage,
+  modelCacheKey,
 } from './useModelDownload';
+import type { ModelConfig } from '@/app/_shared/config/models';
 
 // ─── REDUCER ─────────────────────────────────────────────────────────────────
 
@@ -130,6 +132,37 @@ describe('httpErrorMessage', () => {
   });
 });
 
+// ─── CACHE KEY ───────────────────────────────────────────────────────────────
+
+describe('modelCacheKey', () => {
+  const baseConfig: ModelConfig = {
+    id: 'acne-yolov8m',
+    url: 'https://huggingface.co/drpauloreis/dermapro-acne-yolov8m/resolve/main/acne-yolov8m.onnx',
+    expectedSize: 99 * 1024 * 1024,
+    classNames: ['lesao_acneiforme'],
+    inputSize: 640,
+    license: 'Apache 2.0',
+    attribution: 'Test',
+  };
+
+  it('inclui o id do modelo', () => {
+    expect(modelCacheKey(baseConfig)).toContain('acne-yolov8m');
+  });
+
+  it('inclui a URL completa', () => {
+    expect(modelCacheKey(baseConfig)).toContain(baseConfig.url);
+  });
+
+  it('chaves diferentes para URLs diferentes (mesma id)', () => {
+    const oldConfig: ModelConfig = { ...baseConfig, url: 'https://github.com/example/releases/download/v1/acne.onnx' };
+    expect(modelCacheKey(baseConfig)).not.toBe(modelCacheKey(oldConfig));
+  });
+
+  it('chave estável para mesma config', () => {
+    expect(modelCacheKey(baseConfig)).toBe(modelCacheKey({ ...baseConfig }));
+  });
+});
+
 // ─── TODO: TESTES DE INTEGRAÇÃO DO HOOK ──────────────────────────────────────
 // Os testes abaixo requerem @testing-library/react (renderHook) + mock de fetch
 // com ReadableStream — tecnicamente viável em jsdom mas envolve nova dependência.
@@ -144,3 +177,8 @@ describe('httpErrorMessage', () => {
 // - Cache hit (IndexedDB mock) → status 'ready' sem chamada a fetch
 // - reset() volta ao estado inicial e aborta fetch em andamento
 // - Unmount durante download chama abort()
+// - Cache hit com nova chave `id::url` → status 'ready' sem fetch
+// - Cache miss com chave URL diferente da antiga → fetch disparado
+//
+// TODO useAcneDetector.test.ts (requer @testing-library/react + mock onnxruntime-web):
+// - session.run() que nunca resolve → detect() rejeita com mensagem pt-BR após 30s

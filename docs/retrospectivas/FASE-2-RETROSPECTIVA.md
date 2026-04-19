@@ -160,6 +160,7 @@ Recharts é pesado e usa APIs de browser (`ResizeObserver`, `window`). Importado
 | `originalCanvas` null no download | `AcneResultPanel` | `useRef` não dispara re-render | Migrar para `useState` |
 | Build quebrado em produção | `itaCalculator.ts` | `roi.bbox` refatorado de `{x1,y1,x2,y2}` para `{x,y,width,height}` — arquivo não atualizado | Atualizar desestruturação para novo formato |
 | Bochechas invertidas (Dir/Esq) | `roiExtractor.ts` | Convenção MediaPipe: Dir/Esq = perspectiva do paciente, não da câmera | Mapear `extractLeftCheekROI` para índices do lado alto (perspectiva paciente) |
+| WebGPU trava `session.run()` silenciosamente em M1 | `useAcneDetector.ts` | Bug conhecido onnxruntime-web + Apple Silicon: shader compilation pode bloquear indefinidamente sem lançar exceção | Remover WebGPU de `executionProviders` + adicionar timeout de 30s na inferência |
 
 ---
 
