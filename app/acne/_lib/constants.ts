@@ -1,7 +1,9 @@
 export const MODULE_ID = 'acne' as const;
 export const MODEL_ID = 'acne-yolov8m' as const;
 export const MODEL_INPUT_SIZE = 640;
-export const DETECTION_CONF_THRESHOLD = 0.25;
+// Threshold 0.15 escolhido após teste clínico em 2026-04-19 mostrou que 0.25
+// gerava recall insuficiente em fotos reais de consultório. Precision continuou adequada.
+export const DETECTION_CONF_THRESHOLD = 0.15;
 export const NMS_IOU_THRESHOLD = 0.45;
 export const MIN_UPLOAD_WIDTH = 480;
 export const MIN_UPLOAD_HEIGHT = 640;
