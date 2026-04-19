@@ -223,9 +223,9 @@ Três camadas de tokens:
 | Débito | Arquivo | Impacto | Prioridade |
 | :--- | :--- | :--- | :--- |
 | **CLAHE sem interpolação bilinear** | `clahe.ts` | Artefatos de bloco | **ALTA** |
-| **QA de imagem no upload do Acne** | `AcneModuleClient.tsx` | Risco clínico | **ALTA** |
+| **QA de imagem no upload do Acne** | `AcneModuleClient.tsx` | Risco clínico | **RESOLVIDO (2026-04-19)**. runQualityChecks no step upload. Warnings persistidos para PDF. |
 | **Skeletonize não implementado** | `_shared/ml/` | Necessário para Linhas | **MÉDIA** |
-| **itaCalculator usa bbox** | `itaCalculator.ts` | Imprecisão Melasma | **MÉDIA** |
+| **itaCalculator usa bbox** | `itaCalculator.ts` | Imprecisão Melasma | **RESOLVIDO (2026-04-19)**. isPointInROI implementado. Commit: fix(_shared): itaCalculator. |
 
 ---
 
