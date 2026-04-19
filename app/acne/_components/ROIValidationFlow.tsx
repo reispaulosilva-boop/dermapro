@@ -47,7 +47,7 @@ function bitmapToCanvas(bitmap: ImageBitmap): HTMLCanvasElement {
 }
 
 export interface ROIValidationFlowProps {
-  onValidated: (correct: boolean) => void;
+  onValidated: (correct: boolean, warnings: string[]) => void;
 }
 
 export default function ROIValidationFlow({ onValidated }: ROIValidationFlowProps) {
@@ -206,7 +206,7 @@ export default function ROIValidationFlow({ onValidated }: ROIValidationFlowProp
       <ROIValidationControls
         showLandmarks={showLandmarks}
         onToggleLandmarks={() => setShowLandmarks(v => !v)}
-        onValidated={onValidated}
+        onValidated={(correct) => onValidated(correct, state.warnings)}
       />
 
       <button

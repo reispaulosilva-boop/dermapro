@@ -18,6 +18,7 @@ import type { RegionCount } from '../_lib/countByRegion';
 import { hayashiSeverity } from '../_lib/hayashiSeverity';
 import type { SeverityResult } from '../_lib/hayashiSeverity';
 import { getModelConfig, USE_STUB_DETECTOR } from '@/app/_shared/config/models';
+import { exportAcnePdf } from '../_lib/acnePdfExport';
 import {
   MODEL_ID,
   MIN_UPLOAD_WIDTH,
@@ -101,6 +102,7 @@ export default function AcneModuleClient() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [roisValidated, setRoisValidated] = useState(false);
+  const [qaWarnings, setQaWarnings] = useState<string[]>([]);
   const canvasRef = useRef<AcnePreviewCanvasHandle | null>(null);
 
   const config = getModelConfig(MODEL_ID);
@@ -119,8 +121,9 @@ export default function AcneModuleClient() {
     setStep(alreadyValidated ? 'upload' : 'roi_validation');
   };
 
-  const handleROIValidated = (_correct: boolean) => {
+  const handleROIValidated = (_correct: boolean, warnings: string[]) => {
     setRoisValidated(true);
+    setQaWarnings(warnings);
     setStep('upload');
   };
 
@@ -139,8 +142,13 @@ export default function AcneModuleClient() {
   };
 
   const handleExportPdf = () => {
-    // TODO (Bloco 9): implementar exportação PDF via acnePdfExport
-    window.alert('Exportação de PDF em desenvolvimento.');
+    if (!analysisResult) return;
+    void exportAcnePdf({
+      annotatedCanvas: canvasRef.current?.getAnnotatedCanvas() ?? null,
+      severity: analysisResult.severity,
+      regionCounts: analysisResult.regionCounts,
+      qaWarnings,
+    });
   };
 
   // Abort analysis if model download or detector hits an error
