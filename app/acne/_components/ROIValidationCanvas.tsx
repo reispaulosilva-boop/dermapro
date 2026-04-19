@@ -37,29 +37,20 @@ function polygonCentroid(polygon: FacialPoint[]): FacialPoint {
   return { x: cx, y: cy };
 }
 
-function drawPolygonWithHoles(
+function drawROIPolygons(
   ctx: CanvasRenderingContext2D,
-  polygon: FacialPoint[],
-  holes: FacialPoint[][] | undefined,
+  polygons: FacialPoint[][],
   sx: number,
   sy: number,
 ) {
-  ctx.beginPath();
-  if (polygon.length === 0) return;
-  ctx.moveTo(polygon[0]!.x * sx, polygon[0]!.y * sy);
-  for (let i = 1; i < polygon.length; i++) {
-    ctx.lineTo(polygon[i]!.x * sx, polygon[i]!.y * sy);
-  }
-  ctx.closePath();
-  if (holes) {
-    for (const hole of holes) {
-      if (hole.length === 0) continue;
-      ctx.moveTo(hole[0]!.x * sx, hole[0]!.y * sy);
-      for (let i = 1; i < hole.length; i++) {
-        ctx.lineTo(hole[i]!.x * sx, hole[i]!.y * sy);
-      }
-      ctx.closePath();
+  for (const polygon of polygons) {
+    if (polygon.length === 0) continue;
+    ctx.beginPath();
+    ctx.moveTo(polygon[0]!.x * sx, polygon[0]!.y * sy);
+    for (let i = 1; i < polygon.length; i++) {
+      ctx.lineTo(polygon[i]!.x * sx, polygon[i]!.y * sy);
     }
+    ctx.closePath();
   }
 }
 
@@ -104,27 +95,30 @@ export default function ROIValidationCanvas({
     const sx = logW / imgW;
     const sy = logH / imgH;
 
-    // Polígonos de ROI
+    // Polígonos de ROI — cada sub-polígono desenhado em path separado (evenodd para furos)
     for (const roi of rois) {
       const hex = ROI_COLORS[roi.name] ?? '#ffffff';
-      drawPolygonWithHoles(ctx, roi.polygon, roi.holes, sx, sy);
+      drawROIPolygons(ctx, roi.polygons, sx, sy);
       ctx.fillStyle = hex + '4d';   // 30% alpha
       ctx.fill('evenodd');
       ctx.strokeStyle = hex + 'cc'; // 80% alpha
       ctx.lineWidth = presentationMode ? 3 : 2;
       ctx.stroke();
 
-      // Label no centróide
-      const c = polygonCentroid(roi.polygon);
-      const fontSize = presentationMode ? 16 : 13;
-      ctx.font = `600 ${fontSize}px var(--font-sans, system-ui)`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,0.85)';
-      ctx.shadowBlur = 5;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(ROI_LABELS_PT[roi.name] ?? roi.name, c.x * sx, c.y * sy);
-      ctx.shadowBlur = 0;
+      // Label no centróide do primeiro polígono (principal)
+      const mainPoly = roi.polygons[0];
+      if (mainPoly && mainPoly.length > 0) {
+        const c = polygonCentroid(mainPoly);
+        const fontSize = presentationMode ? 16 : 13;
+        ctx.font = `600 ${fontSize}px var(--font-sans, system-ui)`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,0.85)';
+        ctx.shadowBlur = 5;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(ROI_LABELS_PT[roi.name] ?? roi.name, c.x * sx, c.y * sy);
+        ctx.shadowBlur = 0;
+      }
     }
 
     // 478 landmarks como dots semi-transparentes

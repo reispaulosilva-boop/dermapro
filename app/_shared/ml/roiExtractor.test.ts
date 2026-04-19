@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  isPointInPolygon, isPointInROI, polygonToBbox, polygonArea,
+  isPointInPolygon, isPointInROI, polygonToBbox, polygonsToBbox, polygonArea,
   extractForeheadROI, extractLeftCheekROI, extractRightCheekROI,
   extractChinROI, extractNoseROI, extractSupralabialROI,
   interpupillaryDistancePx, estimateFaceAreaCm2,
@@ -8,7 +8,7 @@ import {
 } from './roiExtractor';
 
 // ─── LANDMARKS SINTÉTICOS ─────────────────────────────────────────────────────
-// 478 pontos distribuídos em uma grade face-like normalizada [0,1]
+// 478 pontos em grade normalizada [0,1] — garante cobertura de todos os índices do JSON
 function makeLandmarks(count = 478): FacialPoint[] {
   return Array.from({ length: count }, (_, i) => ({
     x: 0.2 + (i % 30) * 0.02,
@@ -48,36 +48,46 @@ describe('isPointInPolygon', () => {
 // ─── isPointInROI ────────────────────────────────────────────────────────────
 
 describe('isPointInROI', () => {
-  const outerSquare: FacialPoint[] = [
-    { x: 0, y: 0 }, { x: 20, y: 0 }, { x: 20, y: 20 }, { x: 0, y: 20 },
+  const polyA: FacialPoint[] = [
+    { x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 },
   ];
-  const innerHole: FacialPoint[] = [
-    { x: 5, y: 5 }, { x: 15, y: 5 }, { x: 15, y: 15 }, { x: 5, y: 15 },
+  const polyB: FacialPoint[] = [
+    { x: 20, y: 20 }, { x: 30, y: 20 }, { x: 30, y: 30 }, { x: 20, y: 30 },
   ];
   const roi: SkinROI = {
-    name: 'test', polygon: outerSquare, holes: [innerHole],
-    bbox: polygonToBbox(outerSquare),
+    name: 'forehead',
+    polygons: [polyA, polyB],
+    bbox: polygonsToBbox([polyA, polyB]),
   };
 
-  it('ponto dentro do outer mas fora do hole → true', () => {
-    expect(isPointInROI({ x: 1, y: 1 }, roi)).toBe(true);
+  it('ponto dentro do primeiro polígono → true', () => {
+    expect(isPointInROI({ x: 5, y: 5 }, roi)).toBe(true);
   });
 
-  it('ponto dentro do hole → false', () => {
-    expect(isPointInROI({ x: 10, y: 10 }, roi)).toBe(false);
+  it('ponto dentro do segundo polígono → true', () => {
+    expect(isPointInROI({ x: 25, y: 25 }, roi)).toBe(true);
   });
 
-  it('ponto fora do outer → false', () => {
-    expect(isPointInROI({ x: 25, y: 25 }, roi)).toBe(false);
+  it('ponto fora de todos os polígonos → false', () => {
+    expect(isPointInROI({ x: 15, y: 15 }, roi)).toBe(false);
   });
 });
 
-// ─── polygonToBbox / polygonArea ─────────────────────────────────────────────
+// ─── polygonToBbox / polygonsToBbox / polygonArea ─────────────────────────────
 
 describe('polygonToBbox', () => {
   it('retorna bounding box correto', () => {
     const poly: FacialPoint[] = [{ x: 2, y: 3 }, { x: 8, y: 1 }, { x: 5, y: 9 }];
     expect(polygonToBbox(poly)).toEqual({ x1: 2, y1: 1, x2: 8, y2: 9 });
+  });
+});
+
+describe('polygonsToBbox', () => {
+  it('envolve todos os polígonos', () => {
+    const p1: FacialPoint[] = [{ x: 0, y: 0 }, { x: 5, y: 5 }];
+    const p2: FacialPoint[] = [{ x: 10, y: 10 }, { x: 20, y: 20 }];
+    const bb = polygonsToBbox([p1, p2]);
+    expect(bb).toEqual({ x: 0, y: 0, width: 20, height: 20 });
   });
 });
 
@@ -99,54 +109,68 @@ describe('polygonArea', () => {
 
 describe('extractForeheadROI', () => {
   it('retorna ROI com nome forehead', () => {
-    const roi = extractForeheadROI(LM, 640, 480);
-    expect(roi.name).toBe('forehead');
+    expect(extractForeheadROI(LM, 640, 480).name).toBe('forehead');
   });
 
-  it('polígono tem pontos positivos', () => {
+  it('tem múltiplos polígonos (frontal + glabela)', () => {
     const roi = extractForeheadROI(LM, 640, 480);
-    expect(roi.polygon.length).toBeGreaterThan(0);
-    for (const p of roi.polygon) {
-      expect(p.x).toBeGreaterThanOrEqual(0);
-      expect(p.y).toBeGreaterThanOrEqual(0);
+    expect(roi.polygons.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('todos os polígonos têm pontos positivos', () => {
+    const roi = extractForeheadROI(LM, 640, 480);
+    for (const poly of roi.polygons) {
+      expect(poly.length).toBeGreaterThan(0);
+      for (const p of poly) {
+        expect(p.x).toBeGreaterThanOrEqual(0);
+        expect(p.y).toBeGreaterThanOrEqual(0);
+      }
     }
   });
 
-  it('bbox é consistente com o polígono', () => {
+  it('bbox cobre todos os polígonos', () => {
     const roi = extractForeheadROI(LM, 640, 480);
-    const { x1, y1, x2, y2 } = roi.bbox;
-    for (const p of roi.polygon) {
-      expect(p.x).toBeGreaterThanOrEqual(x1 - 0.01);
-      expect(p.x).toBeLessThanOrEqual(x2 + 0.01);
-      expect(p.y).toBeGreaterThanOrEqual(y1 - 0.01);
-      expect(p.y).toBeLessThanOrEqual(y2 + 0.01);
+    const { x, y, width, height } = roi.bbox;
+    for (const poly of roi.polygons) {
+      for (const p of poly) {
+        expect(p.x).toBeGreaterThanOrEqual(x - 0.01);
+        expect(p.x).toBeLessThanOrEqual(x + width + 0.01);
+        expect(p.y).toBeGreaterThanOrEqual(y - 0.01);
+        expect(p.y).toBeLessThanOrEqual(y + height + 0.01);
+      }
     }
   });
 });
 
 describe('extractNoseROI', () => {
-  it('tem holes (narinas)', () => {
+  it('retorna ROI com nome nose e ao menos 1 polígono', () => {
     const roi = extractNoseROI(LM, 640, 480);
-    expect(roi.holes).toBeDefined();
-    expect(roi.holes!.length).toBe(2);
+    expect(roi.name).toBe('nose');
+    expect(roi.polygons.length).toBeGreaterThanOrEqual(1);
   });
 });
 
 describe('outros extractores', () => {
-  it('extractLeftCheekROI retorna ROI nomeada leftCheek', () => {
-    expect(extractLeftCheekROI(LM, 640, 480).name).toBe('leftCheek');
+  it('extractLeftCheekROI retorna 3 polígonos (malar_lateral + malar_medial + infrapalpebral)', () => {
+    const roi = extractLeftCheekROI(LM, 640, 480);
+    expect(roi.name).toBe('leftCheek');
+    expect(roi.polygons.length).toBe(3);
   });
 
-  it('extractRightCheekROI retorna ROI nomeada rightCheek', () => {
-    expect(extractRightCheekROI(LM, 640, 480).name).toBe('rightCheek');
+  it('extractRightCheekROI retorna 3 polígonos', () => {
+    const roi = extractRightCheekROI(LM, 640, 480);
+    expect(roi.name).toBe('rightCheek');
+    expect(roi.polygons.length).toBe(3);
   });
 
   it('extractChinROI retorna ROI nomeada chin', () => {
     expect(extractChinROI(LM, 640, 480).name).toBe('chin');
   });
 
-  it('extractSupralabialROI retorna ROI nomeada supralabial', () => {
-    expect(extractSupralabialROI(LM, 640, 480).name).toBe('supralabial');
+  it('extractSupralabialROI retorna ROI nomeada supralabial com 2 polígonos (perioral + labial)', () => {
+    const roi = extractSupralabialROI(LM, 640, 480);
+    expect(roi.name).toBe('supralabial');
+    expect(roi.polygons.length).toBe(2);
   });
 });
 
@@ -154,14 +178,12 @@ describe('outros extractores', () => {
 
 describe('interpupillaryDistancePx', () => {
   it('retorna valor positivo com landmarks sintéticos', () => {
-    const ipd = interpupillaryDistancePx(LM);
-    expect(ipd).toBeGreaterThan(0);
+    expect(interpupillaryDistancePx(LM)).toBeGreaterThan(0);
   });
 
   it('usa cantos de olho (índices 33/263) quando iris não disponível', () => {
-    const shortLm = makeLandmarks(468);  // sem iris
-    const ipd = interpupillaryDistancePx(shortLm);
-    expect(ipd).toBeGreaterThanOrEqual(0);
+    const shortLm = makeLandmarks(468);
+    expect(interpupillaryDistancePx(shortLm)).toBeGreaterThanOrEqual(0);
   });
 });
 
@@ -170,8 +192,7 @@ describe('interpupillaryDistancePx', () => {
 describe('estimateFaceAreaCm2', () => {
   it('retorna valor plausível (> 0) com IPD positivo', () => {
     const ipd = interpupillaryDistancePx(LM);
-    const area = estimateFaceAreaCm2(LM, ipd);
-    expect(area).toBeGreaterThan(0);
+    expect(estimateFaceAreaCm2(LM, ipd)).toBeGreaterThan(0);
   });
 
   it('retorna 0 quando IPD é 0', () => {

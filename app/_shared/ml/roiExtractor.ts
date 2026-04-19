@@ -4,8 +4,13 @@
  * Extrai Regiões de Interesse (ROIs) da pele a partir dos 478 landmarks do
  * MediaPipe Face Landmarker (468 mesh + 10 iris).
  *
+ * Mapeamento anatômico via topographicIndices.json (portado do FacePipe Pro).
+ * Convenção Dir/Esq = ponto de vista do PACIENTE (consistente com MediaPipe).
  * Referência: https://github.com/google/mediapipe/blob/master/mediapipe/modules/face_geometry/data/canonical_face_model_uv_visualization.png
  */
+
+import topographicIndices from './topographicIndices.json';
+import { extractPolygonPaths } from './extractPolygonPaths';
 
 // ─── TIPOS ────────────────────────────────────────────────────────────────────
 
@@ -13,69 +18,9 @@ export type FacialPoint = { x: number; y: number; z?: number };
 
 export type SkinROI = {
   name: string;
-  polygon: FacialPoint[];
-  holes?: FacialPoint[][];
-  bbox: { x1: number; y1: number; x2: number; y2: number };
+  polygons: FacialPoint[][];
+  bbox: { x: number; y: number; width: number; height: number };
 };
-
-// ─── ÍNDICES DE LANDMARKS ────────────────────────────────────────────────────
-
-// Contorno facial externo (face oval)
-const IDX_FACE_OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109] as const;
-
-// Testa: base (linha sobrancelhas esq→dir) → hairline (dir→esq)
-const IDX_FOREHEAD = [
-  // Base: linha das sobrancelhas, esquerda → direita da imagem
-  46, 53, 52, 65, 55, 107, 9, 336, 285, 295, 282, 283, 276,
-  // Hairline: têmpora direita → topo → têmpora esquerda
-  251, 284, 332, 297, 338, 10, 109, 67, 103, 54, 21,
-] as const;
-
-// Bochechas — convenção paciente: left = bochecha esquerda da paciente (lado direito da imagem)
-// Bochecha ESQUERDA da paciente = lado direito da imagem = índices baixos (~116-234)
-const IDX_LEFT_CHEEK_POLY = [
-  50, 205, 187, 147, 123, 210, 169, 165, 203,
-] as const;
-
-// Bochecha DIREITA da paciente = lado esquerdo da imagem = índices altos (~280-454)
-const IDX_RIGHT_CHEEK_POLY = [
-  280, 425, 411, 376, 352, 430, 394, 423,
-] as const;
-
-// Queixo — conservador: abaixo da boca até ponta do queixo
-const IDX_CHIN_POLY = [
-  194, 201, 200, 421, 418,            // lateral e inferior abaixo da boca
-  175, 152, 148, 176, 149, 150,       // ponta do queixo
-  169, 136, 172,                       // retorno lateral
-] as const;
-
-// Nariz — inclui laterais e asas nasais
-const IDX_NOSE_BASE_POLY = [
-  8,                                    // topo (glabela/entre sobrancelhas)
-  417, 413, 464, 357, 343, 412, 465,   // lateral direita descendo
-  391, 327, 326,                        // asa nasal direita
-  2,                                    // ponta nasal
-  97, 98, 129,                          // asa nasal esquerda
-  49, 131, 134, 51, 5,                  // lateral esquerda subindo
-  195, 197, 6, 168,                     // ponte do nariz (topo)
-] as const;
-// Narinas (holes)
-const IDX_NARIS_RIGHT = [358, 279, 331, 294] as const;
-const IDX_NARIS_LEFT  = [129, 49, 102, 64] as const;
-
-// Região supralabial (filtrum + área acima dos lábios) — usado em melasma
-const IDX_SUPRALABIAL = [0,37,39,40,185,61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0] as const;
-
-// Olhos (para holes em ROIs que os contêm)
-const IDX_LEFT_EYE  = [263,249,390,373,374,380,381,382,362,398,384,385,386,387,388,466] as const;
-const IDX_RIGHT_EYE = [33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246] as const;
-
-// Centros das pupilas: iris landmarks 468 (olho direito, viewer esq.) e 473 (olho esq., viewer dir.)
-// Fallback para cantos externos dos olhos: 33 (dir.) e 263 (esq.)
-const IDX_PUPIL_RIGHT  = 468;
-const IDX_PUPIL_LEFT   = 473;
-const IDX_CANTHUS_RIGHT = 33;
-const IDX_CANTHUS_LEFT  = 263;
 
 // ─── UTILITÁRIOS GEOMÉTRICOS ─────────────────────────────────────────────────
 
@@ -97,20 +42,15 @@ export function isPointInPolygon(
   return inside;
 }
 
-/**
- * Retorna true se o ponto está dentro do polygon principal
- * E fora de todos os holes.
- */
+/** Retorna true se o ponto está dentro de qualquer polígono da ROI. */
 export function isPointInROI(point: FacialPoint, roi: SkinROI): boolean {
-  if (!isPointInPolygon(point, roi.polygon)) return false;
-  if (roi.holes) {
-    for (const hole of roi.holes) {
-      if (isPointInPolygon(point, hole)) return false;
-    }
+  for (const polygon of roi.polygons) {
+    if (isPointInPolygon(point, polygon)) return true;
   }
-  return true;
+  return false;
 }
 
+/** Bounding box de um único polígono. */
 export function polygonToBbox(
   polygon: FacialPoint[],
 ): { x1: number; y1: number; x2: number; y2: number } {
@@ -122,6 +62,22 @@ export function polygonToBbox(
     if (p.y > y2) y2 = p.y;
   }
   return { x1, y1, x2, y2 };
+}
+
+/** Bounding box que envolve todos os polígonos de uma ROI. */
+export function polygonsToBbox(
+  polygons: FacialPoint[][],
+): { x: number; y: number; width: number; height: number } {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const poly of polygons) {
+    for (const p of poly) {
+      if (p.x < minX) minX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y > maxY) maxY = p.y;
+    }
+  }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 }
 
 /** Área do polígono via fórmula de Shoelace (valor absoluto). */
@@ -145,14 +101,33 @@ function lmToPx(
   return { x: lm.x * width, y: lm.y * height, z: lm.z };
 }
 
-function indicesToPolygon(
-  indices: readonly number[],
+/**
+ * Converte uma lista linear de índices (com fechamentos FacePipe) em
+ * sub-polígonos de pixels. Cada fechamento (índice == primeiro do sub-caminho)
+ * inicia um novo sub-polígono.
+ */
+function indicesToPolygonList(
+  indices: number[],
   landmarks: FacialPoint[],
   width: number,
   height: number,
-): FacialPoint[] {
-  return indices.map(i => lmToPx(landmarks[i] ?? { x: 0, y: 0 }, width, height));
+): FacialPoint[][] {
+  const paths = extractPolygonPaths(indices);
+  return paths.map(path =>
+    path.map(idx => lmToPx(landmarks[idx] ?? { x: 0, y: 0 }, width, height)),
+  );
 }
+
+// ─── ÍNDICES LEGADOS (usados apenas por funções não-migradas) ────────────────
+
+// Contorno facial externo (face oval)
+const IDX_FACE_OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109] as const;
+
+// Centros das pupilas e cantos de olho (para medidas)
+const IDX_PUPIL_RIGHT   = 468;
+const IDX_PUPIL_LEFT    = 473;
+const IDX_CANTHUS_RIGHT = 33;
+const IDX_CANTHUS_LEFT  = 263;
 
 // ─── EXTRAÇÃO DE ROIs ─────────────────────────────────────────────────────────
 
@@ -161,8 +136,10 @@ export function extractForeheadROI(
   width: number,
   height: number,
 ): SkinROI {
-  const polygon = indicesToPolygon(IDX_FOREHEAD, landmarks, width, height);
-  return { name: 'forehead', polygon, bbox: polygonToBbox(polygon) };
+  const frontal = indicesToPolygonList(topographicIndices.frontal, landmarks, width, height);
+  const glabela = indicesToPolygonList(topographicIndices.glabela, landmarks, width, height);
+  const polygons = [...frontal, ...glabela];
+  return { name: 'forehead', polygons, bbox: polygonsToBbox(polygons) };
 }
 
 export function extractLeftCheekROI(
@@ -170,8 +147,11 @@ export function extractLeftCheekROI(
   width: number,
   height: number,
 ): SkinROI {
-  const polygon = indicesToPolygon(IDX_LEFT_CHEEK_POLY, landmarks, width, height);
-  return { name: 'leftCheek', polygon, bbox: polygonToBbox(polygon) };
+  const ml = indicesToPolygonList(topographicIndices.malar_lateral_l, landmarks, width, height);
+  const mm = indicesToPolygonList(topographicIndices.malar_medial_l,  landmarks, width, height);
+  const ip = indicesToPolygonList(topographicIndices.infrapalpebral_l, landmarks, width, height);
+  const polygons = [...ml, ...mm, ...ip];
+  return { name: 'leftCheek', polygons, bbox: polygonsToBbox(polygons) };
 }
 
 export function extractRightCheekROI(
@@ -179,8 +159,11 @@ export function extractRightCheekROI(
   width: number,
   height: number,
 ): SkinROI {
-  const polygon = indicesToPolygon(IDX_RIGHT_CHEEK_POLY, landmarks, width, height);
-  return { name: 'rightCheek', polygon, bbox: polygonToBbox(polygon) };
+  const ml = indicesToPolygonList(topographicIndices.malar_lateral_r, landmarks, width, height);
+  const mm = indicesToPolygonList(topographicIndices.malar_medial_r,  landmarks, width, height);
+  const ip = indicesToPolygonList(topographicIndices.infrapalpebral_r, landmarks, width, height);
+  const polygons = [...ml, ...mm, ...ip];
+  return { name: 'rightCheek', polygons, bbox: polygonsToBbox(polygons) };
 }
 
 export function extractChinROI(
@@ -188,8 +171,8 @@ export function extractChinROI(
   width: number,
   height: number,
 ): SkinROI {
-  const polygon = indicesToPolygon(IDX_CHIN_POLY, landmarks, width, height);
-  return { name: 'chin', polygon, bbox: polygonToBbox(polygon) };
+  const polygons = indicesToPolygonList(topographicIndices.mento, landmarks, width, height);
+  return { name: 'chin', polygons, bbox: polygonsToBbox(polygons) };
 }
 
 export function extractNoseROI(
@@ -197,12 +180,8 @@ export function extractNoseROI(
   width: number,
   height: number,
 ): SkinROI {
-  const polygon = indicesToPolygon(IDX_NOSE_BASE_POLY, landmarks, width, height);
-  const holes = [
-    indicesToPolygon(IDX_NARIS_RIGHT, landmarks, width, height),
-    indicesToPolygon(IDX_NARIS_LEFT,  landmarks, width, height),
-  ];
-  return { name: 'nose', polygon, holes, bbox: polygonToBbox(polygon) };
+  const polygons = indicesToPolygonList(topographicIndices.nariz, landmarks, width, height);
+  return { name: 'nose', polygons, bbox: polygonsToBbox(polygons) };
 }
 
 export function extractSupralabialROI(
@@ -210,8 +189,8 @@ export function extractSupralabialROI(
   width: number,
   height: number,
 ): SkinROI {
-  const polygon = indicesToPolygon(IDX_SUPRALABIAL, landmarks, width, height);
-  return { name: 'supralabial', polygon, bbox: polygonToBbox(polygon) };
+  const polygons = indicesToPolygonList(topographicIndices.perioral, landmarks, width, height);
+  return { name: 'supralabial', polygons, bbox: polygonsToBbox(polygons) };
 }
 
 // ─── MEDIDAS ─────────────────────────────────────────────────────────────────
@@ -232,22 +211,18 @@ export function interpupillaryDistancePx(landmarks: FacialPoint[]): number {
 /**
  * Estima rotação facial a partir dos landmarks (sem matriz de transformação).
  * Aproximação baseada em assimetria de pontos simétricos.
- * TODO: Preferir o resultado da matriz de transformação do FaceLandmarker quando disponível.
  */
 export function estimateFaceRotation(
   landmarks: FacialPoint[],
 ): { yaw: number; pitch: number; roll: number } {
-  // Yaw: diferença em z entre os pontos laterais
   const leftTemple  = landmarks[234] ?? { x: 0.2, y: 0.5, z: 0 };
   const rightTemple = landmarks[454] ?? { x: 0.8, y: 0.5, z: 0 };
   const yaw = ((rightTemple.z ?? 0) - (leftTemple.z ?? 0)) * 90;
 
-  // Pitch: relação entre nariz e mento
   const noseTip = landmarks[4]   ?? { x: 0.5, y: 0.5, z: 0 };
   const chin    = landmarks[152] ?? { x: 0.5, y: 0.8, z: 0 };
   const pitch   = ((noseTip.z ?? 0) - (chin.z ?? 0)) * 45;
 
-  // Roll: ângulo da linha interpupilar
   const rEye = landmarks[IDX_CANTHUS_RIGHT] ?? { x: 0.35, y: 0.4, z: 0 };
   const lEye = landmarks[IDX_CANTHUS_LEFT]  ?? { x: 0.65, y: 0.4, z: 0 };
   const roll = Math.atan2(lEye.y - rEye.y, lEye.x - rEye.x) * (180 / Math.PI);
@@ -259,7 +234,7 @@ export function estimateFaceRotation(
  * Estima área facial em cm².
  *
  * @param landmarks Landmarks normalizados [0,1].
- * @param interpupillaryPx Distância interpupilar em pixels (para escala).
+ * @param interpupillaryPx Distância interpupilar em pixels.
  * @param referenceMm Distância interpupilar de referência em mm (padrão adulto: 63 mm).
  */
 export function estimateFaceAreaCm2(
@@ -268,14 +243,11 @@ export function estimateFaceAreaCm2(
   referenceMm = 63,
 ): number {
   if (interpupillaryPx <= 0) return 0;
-  const pxPerMm  = interpupillaryPx / referenceMm;
-  const pxPerCm  = pxPerMm * 10;
+  const pxPerMm   = interpupillaryPx / referenceMm;
+  const pxPerCm   = pxPerMm * 10;
   const px2PerCm2 = pxPerCm * pxPerCm;
 
-  // Polígono do contorno facial (face oval), já em coordenadas normalizadas → converter para px unitários
   const ovalPolygon = IDX_FACE_OVAL.map(i => landmarks[i] ?? { x: 0, y: 0 });
-  const areaNormalized = polygonArea(ovalPolygon);  // em unidades normalizadas²
-  // Para obter área em px², precisaríamos de width/height; aqui retornamos escala relativa
-  // TODO: receber width/height como parâmetros para cálculo absoluto correto
+  const areaNormalized = polygonArea(ovalPolygon);
   return (areaNormalized * px2PerCm2) || 0;
 }
