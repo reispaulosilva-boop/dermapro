@@ -137,6 +137,8 @@ O modelo `acne-yolov8m.onnx` (~99 MB) não foi publicado no GitHub Releases dura
 
 **Status atual:** `USE_STUB_DETECTOR = false` (produção). Setar `true` localmente para testes sem modelo.
 
+> **Update 2026-04-19:** Modelo migrado de GitHub Releases para Hugging Face Hub em 2026-04-19 devido a bloqueio de CORS no GitHub. Repositório público: `drpauloreis/dermapro-acne-yolov8m`. URL do artefato: `https://huggingface.co/drpauloreis/dermapro-acne-yolov8m/resolve/main/acne-yolov8m.onnx`.
+
 ### 5.5 `originalCanvas` como `useState`, não `useRef`
 
 `DownloadPhotoButton` recebia `originalCanvasRef.current` (sempre `null` no primeiro render porque `useRef` não dispara re-render quando atualizado em `useEffect`). Corrigido para `useState<HTMLCanvasElement | null>`, que força o re-render assim que o canvas é criado.
@@ -165,7 +167,7 @@ Recharts é pesado e usa APIs de browser (`ResizeObserver`, `window`). Importado
 
 | Débito | Localização | Impacto | Prioridade |
 |--------|-------------|---------|------------|
-| Modelo ONNX não publicado | GitHub Releases `v0.2.0-acne-model` | Módulo não funciona sem `USE_STUB_DETECTOR=true` | **Crítico** — publicar antes do lançamento |
+| ~~Modelo ONNX não publicado~~ | ~~GitHub Releases `v0.2.0-acne-model`~~ | **RESOLVIDO 2026-04-19** — Modelo migrado de GitHub Releases para Hugging Face Hub (`drpauloreis/dermapro-acne-yolov8m`) devido a bloqueio de CORS no GitHub. | — |
 | PDF sem fonte Inter embutida | `acnePdfExport.ts` | Usa Helvetica; tipografia diverge do design system | Baixo — cosmético |
 | QA de imagem não aplicada na foto de análise | `AcneModuleClient` (step `upload`) | Foto de acne não passa por `runQualityChecks`; apenas a foto de validação ROI passa | Médio — adicionar QA no step 'upload' |
 | `itaCalculator` sem `isPointInROI` exato | `itaCalculator.ts` | Usa apenas bbox para verificação de ROI; deve usar `isPointInROI` | Baixo — já tem TODO no código |
@@ -184,13 +186,11 @@ Recharts é pesado e usa APIs de browser (`ResizeObserver`, `window`). Importado
 | **Textura** | `useModelDownload`, pipeline YOLO (adaptado), `countByRegion` (adaptado) |
 | **Rosácea** | ROI de bochechas + nariz de `roiExtractor`, `SeverityBadge` (adaptado) |
 
-### Ação bloqueadora antes de qualquer lançamento
+### ~~Ação bloqueadora antes de qualquer lançamento~~ — RESOLVIDA em 2026-04-19
 
-Publicar o modelo `acne-yolov8m.onnx` (~99 MB) na URL:
-```
-https://github.com/reispaulosilva-boop/dermapro/releases/download/v0.2.0-acne-model/acne-yolov8m.onnx
-```
-Sem isso, `USE_STUB_DETECTOR` precisa estar `true` para o fluxo funcionar.
+~~Publicar o modelo `acne-yolov8m.onnx` (~99 MB) na URL do GitHub Releases.~~
+
+Modelo publicado em Hugging Face Hub (`drpauloreis/dermapro-acne-yolov8m`) com CORS habilitado. `USE_STUB_DETECTOR = false` em produção.
 
 ---
 

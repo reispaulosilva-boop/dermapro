@@ -1,6 +1,6 @@
 export interface ModelConfig {
   id: string;
-  /** URL pública do arquivo .onnx (GitHub Releases) */
+  /** URL pública do arquivo .onnx */
   url: string;
   /** Tamanho esperado em bytes — usado para validar download e exibir progresso */
   expectedSize: number;
@@ -13,12 +13,12 @@ export interface ModelConfig {
 export const MODELS: Record<string, ModelConfig> = {
   'acne-yolov8m': {
     id: 'acne-yolov8m',
-    url: 'https://github.com/reispaulosilva-boop/dermapro/releases/download/v0.2.0-acne-model/acne-yolov8m.onnx',
+    url: 'https://huggingface.co/drpauloreis/dermapro-acne-yolov8m/resolve/main/acne-yolov8m.onnx',
     expectedSize: 99 * 1024 * 1024,  // ~99 MB (modelo YOLOv8m medium)
     classNames: ['lesao_acneiforme'],
     inputSize: 640,
     license: 'Apache 2.0',
-    attribution: 'Derivado de Tinny-Robot/acne — Nathaniel Handan + Amina Shiga',
+    attribution: 'Derivado de Tinny-Robot/acne (Nathaniel Handan + Amina Shiga, Apache 2.0). Redistribuído via Hugging Face Hub para compatibilidade CORS.',
   },
 };
 

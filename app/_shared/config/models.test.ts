@@ -36,9 +36,9 @@ describe('acne-yolov8m config', () => {
     expect(mb).toBeLessThan(200);
   });
 
-  it('URL aponta para release do acne-yolov8m', () => {
+  it('URL aponta para o modelo no Hugging Face Hub', () => {
     expect(config.url).toContain('acne-yolov8m.onnx');
-    expect(config.url).toContain('v0.2.0-acne-model');
+    expect(config.url).toContain('huggingface.co/drpauloreis/dermapro-acne-yolov8m');
   });
 
   it('licença é Apache 2.0', () => {
