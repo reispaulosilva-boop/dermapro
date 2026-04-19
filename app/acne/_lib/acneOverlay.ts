@@ -6,16 +6,14 @@ export interface OverlayStyle {
   strokeColor: string;
   fillColor: string;
   lineWidth: number;
-  cornerRadius: number;
   labelFontSize: number;
 }
 
 export function getAcneOverlayStyle(presentationMode: boolean): OverlayStyle {
   return {
     strokeColor:   'rgba(226, 138, 123, 0.85)',
-    fillColor:     'rgba(226, 138, 123, 0.08)',
+    fillColor:     presentationMode ? 'rgba(226, 138, 123, 0.20)' : 'rgba(226, 138, 123, 0.15)',
     lineWidth:     presentationMode ? 3 : 2,
-    cornerRadius:  4,
     labelFontSize: presentationMode ? 13 : 11,
   };
 }
@@ -28,32 +26,28 @@ export function drawBboxesOnCanvas(
 ): void {
   for (const det of detections) {
     const [x1, y1, x2, y2] = det.bbox;
-    const w = x2 - x1;
-    const h = y2 - y1;
-    const r = Math.min(style.cornerRadius, w / 2, h / 2);
+    const cx = (x1 + x2) / 2;
+    const cy = (y1 + y2) / 2;
+    // Círculo ligeiramente menor que a bbox (0.7) — mais anatômico e menos agressivo visualmente
+    const radius = Math.max(x2 - x1, y2 - y1) / 2 * 0.7;
 
     ctx.beginPath();
-    ctx.moveTo(x1 + r, y1);
-    ctx.lineTo(x2 - r, y1);
-    ctx.arcTo(x2, y1, x2, y1 + r, r);
-    ctx.lineTo(x2, y2 - r);
-    ctx.arcTo(x2, y2, x2 - r, y2, r);
-    ctx.lineTo(x1 + r, y2);
-    ctx.arcTo(x1, y2, x1, y2 - r, r);
-    ctx.lineTo(x1, y1 + r);
-    ctx.arcTo(x1, y1, x1 + r, y1, r);
-    ctx.closePath();
-
+    ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
     ctx.fillStyle = style.fillColor;
     ctx.fill();
     ctx.strokeStyle = style.strokeColor;
     ctx.lineWidth = style.lineWidth;
     ctx.stroke();
 
-    if (showLabels) {
+    // "?" discreto apenas para detecções de baixa confiança — evita poluição visual
+    if (showLabels && det.score < 0.30) {
       ctx.font = `${style.labelFontSize}px system-ui, sans-serif`;
       ctx.fillStyle = style.strokeColor;
-      ctx.fillText(`${Math.round(det.score * 100)}%`, x1 + 3, y1 - 3);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('?', cx, cy);
+      ctx.textAlign = 'start';
+      ctx.textBaseline = 'alphabetic';
     }
   }
 }
