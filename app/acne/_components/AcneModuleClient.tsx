@@ -17,7 +17,7 @@ import { countByRegion } from '../_lib/countByRegion';
 import type { RegionCount } from '../_lib/countByRegion';
 import { hayashiSeverity } from '../_lib/hayashiSeverity';
 import type { SeverityResult } from '../_lib/hayashiSeverity';
-import { getModelConfig } from '@/app/_shared/config/models';
+import { getModelConfig, USE_STUB_DETECTOR } from '@/app/_shared/config/models';
 import {
   MODEL_ID,
   MIN_UPLOAD_WIDTH,
@@ -113,7 +113,7 @@ export default function AcneModuleClient() {
 
   const handleDisclaimerAccept = () => {
     setDisclaimerOpen(false);
-    void modelDownload.startDownload();
+    if (!USE_STUB_DETECTOR) void modelDownload.startDownload();
     const alreadyValidated = localStorage.getItem(STORAGE_KEY_VALIDATED) === 'true';
     setRoisValidated(alreadyValidated);
     setStep(alreadyValidated ? 'upload' : 'roi_validation');
@@ -146,7 +146,7 @@ export default function AcneModuleClient() {
   // Abort analysis if model download or detector hits an error
   useEffect(() => {
     if (step !== 'analyzing') return;
-    if (modelDownload.status === 'error' || acneDetector.status === 'error') {
+    if ((!USE_STUB_DETECTOR && modelDownload.status === 'error') || acneDetector.status === 'error') {
       const msg =
         modelDownload.error ??
         acneDetector.error ??
@@ -159,7 +159,8 @@ export default function AcneModuleClient() {
   // Trigger analysis when model + detector are ready and we're in analyzing step
   useEffect(() => {
     if (step !== 'analyzing' || !uploadedBitmap) return;
-    if (modelDownload.status !== 'ready' || acneDetector.status !== 'ready') return;
+    if (!USE_STUB_DETECTOR && modelDownload.status !== 'ready') return;
+    if (acneDetector.status !== 'ready') return;
 
     let cancelled = false;
 

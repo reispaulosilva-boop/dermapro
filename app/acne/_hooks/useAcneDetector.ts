@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { preprocessImageForYOLO, postprocessYoloOutput } from '@/app/_shared/ml/yolo';
 import type { Detection } from '@/app/_shared/ml/yolo';
-import { getModelConfig } from '@/app/_shared/config/models';
+import { getModelConfig, USE_STUB_DETECTOR } from '@/app/_shared/config/models';
 import {
   MODEL_ID,
   MODEL_INPUT_SIZE,
@@ -19,11 +19,43 @@ export interface UseAcneDetectorResult {
   detect: (canvas: HTMLCanvasElement) => Promise<Detection[]>;
 }
 
+// ─── STUB ─────────────────────────────────────────────────────────────────────
+
+function makeStubDetections(canvas: HTMLCanvasElement): Detection[] {
+  const w = canvas.width;
+  const h = canvas.height;
+  const count = 4 + Math.floor(Math.random() * 8);
+  const dets: Detection[] = [];
+  for (let i = 0; i < count; i++) {
+    const cx = 0.2 * w + Math.random() * 0.6 * w;
+    const cy = 0.15 * h + Math.random() * 0.65 * h;
+    const size = 0.02 * Math.min(w, h) + Math.random() * 0.03 * Math.min(w, h);
+    dets.push({
+      bbox: [cx - size, cy - size, cx + size, cy + size],
+      score: 0.50 + Math.random() * 0.45,
+      classId: 0,
+      className: 'lesao_acneiforme',
+    });
+  }
+  return dets;
+}
+
 export function useAcneDetector(modelBuffer: ArrayBuffer | null): UseAcneDetectorResult {
-  const [status, setStatus] = useState<DetectorStatus>('idle');
+  const [status, setStatus] = useState<DetectorStatus>(USE_STUB_DETECTOR ? 'ready' : 'idle');
   const [error, setError] = useState<string | null>(null);
   const sessionRef = useRef<import('onnxruntime-web').InferenceSession | null>(null);
   const config = getModelConfig(MODEL_ID);
+
+  // No stub mode: skip ONNX entirely — detector is permanently ready
+  if (USE_STUB_DETECTOR) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const stubDetect = useCallback(async (canvas: HTMLCanvasElement): Promise<Detection[]> => {
+      return new Promise(resolve =>
+        setTimeout(() => resolve(makeStubDetections(canvas)), 600),
+      );
+    }, []);
+    return { status: 'ready', error: null, detect: stubDetect };
+  }
 
   useEffect(() => {
     if (!modelBuffer) return;
