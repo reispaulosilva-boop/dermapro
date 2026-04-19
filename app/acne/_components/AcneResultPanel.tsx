@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import type { RefObject } from 'react';
+import dynamic from 'next/dynamic';
 import type { SkinROI } from '@/app/_shared/ml/roiExtractor';
 import type { Detection } from '@/app/_shared/ml/yolo';
 import type { SeverityResult } from '../_lib/hayashiSeverity';
@@ -9,7 +10,10 @@ import type { RegionCount } from '../_lib/countByRegion';
 import type { AcnePreviewCanvasHandle } from './AcnePreviewCanvas';
 import AcnePreviewCanvas from './AcnePreviewCanvas';
 import SeverityBadge from './SeverityBadge';
-import RegionChart from './RegionChart';
+const RegionChart = dynamic(() => import('./RegionChart'), {
+  ssr: false,
+  loading: () => <div style={{ height: 180 }} aria-busy="true" />,
+});
 import { DownloadPhotoButton } from '@/app/_shared/components/DownloadPhotoButton';
 import { Button } from '@/components/ui/button';
 import { MODULE_ID } from '../_lib/constants';
@@ -37,7 +41,7 @@ export default function AcneResultPanel({
   canvasRef,
   roisValidated: _roisValidated,
 }: AcneResultPanelProps) {
-  const originalCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [originalCanvas, setOriginalCanvas] = useState<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     const canvas = document.createElement('canvas');
@@ -45,7 +49,7 @@ export default function AcneResultPanel({
     canvas.height = imageBitmap.height;
     const ctx = canvas.getContext('2d');
     if (ctx) ctx.drawImage(imageBitmap, 0, 0);
-    originalCanvasRef.current = canvas;
+    setOriginalCanvas(canvas);
   }, [imageBitmap]);
 
   return (
@@ -88,7 +92,7 @@ export default function AcneResultPanel({
         <div
           style={{
             flex: '1 1 40%',
-            minWidth: 280,
+            minWidth: 0,
             display: 'flex',
             flexDirection: 'column',
             gap: 'var(--s-4)',
@@ -109,7 +113,7 @@ export default function AcneResultPanel({
 
           <div style={{ display: 'flex', gap: 'var(--s-2)', flexWrap: 'wrap' }}>
             <DownloadPhotoButton
-              originalCanvas={originalCanvasRef.current ?? undefined}
+              originalCanvas={originalCanvas ?? undefined}
               annotatedCanvas={canvasRef.current?.getAnnotatedCanvas() ?? undefined}
               moduleId={MODULE_ID}
             />

@@ -30,6 +30,7 @@ import { useAcneDetector } from '../_hooks/useAcneDetector';
 import ROIValidationFlow from './ROIValidationFlow';
 import AcneResultPanel from './AcneResultPanel';
 import type { AcnePreviewCanvasHandle } from './AcnePreviewCanvas';
+import { PresentationModeToggle } from '@/app/_shared/components/PresentationModeToggle';
 
 type Step = 'disclaimer' | 'roi_validation' | 'upload' | 'analyzing' | 'results';
 
@@ -66,6 +67,9 @@ function AnalyzingView({
 
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-label={message}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -86,11 +90,13 @@ function AnalyzingView({
         strokeLinecap="round"
         strokeLinejoin="round"
         className="animate-spin"
-        aria-hidden
+        aria-hidden="true"
       >
         <path d="M21 12a9 9 0 1 1-6.219-8.56" />
       </svg>
-      <p style={{ fontSize: 15, textAlign: 'center', maxWidth: 300 }}>{message}</p>
+      <p aria-hidden="true" style={{ fontSize: 15, textAlign: 'center', maxWidth: 300 }}>
+        {message}
+      </p>
     </div>
   );
 }
@@ -256,6 +262,8 @@ export default function AcneModuleClient() {
 
           {modelDownload.status === 'downloading' && (
             <div
+              role="status"
+              aria-live="polite"
               style={{
                 padding: 'var(--s-2) var(--s-4)',
                 borderRadius: 'var(--r-md)',
@@ -265,6 +273,22 @@ export default function AcneModuleClient() {
               }}
             >
               Pré-carregando modelo: {modelDownload.progress}%
+            </div>
+          )}
+
+          {modelDownload.status === 'error' && !analysisError && (
+            <div
+              role="alert"
+              style={{
+                padding: 'var(--s-3) var(--s-4)',
+                borderRadius: 'var(--r-md)',
+                background: 'color-mix(in oklab, var(--sem-alert) 10%, var(--bg-surface))',
+                border: '1px solid var(--sem-alert)',
+                fontSize: 13,
+                color: 'var(--sem-alert)',
+              }}
+            >
+              {modelDownload.error ?? 'Erro ao carregar o modelo. Verifique sua conexão e recarregue a página.'}
             </div>
           )}
 
@@ -287,13 +311,14 @@ export default function AcneModuleClient() {
 
       {step === 'results' && analysisResult && uploadedBitmap && (
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h1
               className="text-xl font-medium"
               style={{ color: 'var(--text-strong)' }}
             >
               Resultado da Análise
             </h1>
+            <PresentationModeToggle />
           </div>
           <AcneResultPanel
             detections={analysisResult.detections}
