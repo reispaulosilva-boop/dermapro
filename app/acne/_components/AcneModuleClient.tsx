@@ -27,6 +27,14 @@ import {
 } from '../_lib/constants';
 import { useModelDownload } from '../_hooks/useModelDownload';
 import { useAcneDetector } from '../_hooks/useAcneDetector';
+import {
+  runQualityChecks,
+  QA_BLUR_ERROR,
+  QA_BLUR_WARN,
+  QA_BRIGHT_MIN,
+  QA_BRIGHT_MAX,
+  QA_SIDE_BIAS_MAX,
+} from '@/app/_shared/qa/imageQuality';
 import ROIValidationFlow from './ROIValidationFlow';
 import AcneResultPanel from './AcneResultPanel';
 import type { AcnePreviewCanvasHandle } from './AcnePreviewCanvas';
@@ -134,6 +142,35 @@ export default function AcneModuleClient() {
   };
 
   const handleImageUpload = (_file: File, bitmap: ImageBitmap) => {
+    // Validação de qualidade (QA)
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      setAnalysisError('Erro ao preparar validação de imagem.');
+      return;
+    }
+    
+    ctx.drawImage(bitmap, 0, 0);
+    
+    const qaResult = runQualityChecks(canvas, {
+      minWidth: MIN_UPLOAD_WIDTH,
+      minHeight: MIN_UPLOAD_HEIGHT,
+      blurErrorThreshold: QA_BLUR_ERROR,
+      blurWarnThreshold: QA_BLUR_WARN,
+      minBrightness: QA_BRIGHT_MIN,
+      maxBrightness: QA_BRIGHT_MAX,
+      maxSideBias: QA_SIDE_BIAS_MAX,
+    });
+
+    if (!qaResult.passed) {
+      setAnalysisError(qaResult.errors[0] || 'A imagem não atende aos critérios de qualidade.');
+      return;
+    }
+
+    setQaWarnings(qaResult.warnings);
     setUploadedBitmap(bitmap);
     setAnalysisError(null);
     setStep('analyzing');
