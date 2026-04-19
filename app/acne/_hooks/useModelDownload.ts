@@ -112,6 +112,16 @@ export async function saveToCache(id: string, buffer: ArrayBuffer): Promise<void
   }
 }
 
+// ─── CHAVE DE CACHE ──────────────────────────────────────────────────────────
+// Inclui URL para invalidar automaticamente quando a fonte do modelo muda.
+// Motivação: migração GitHub Releases → Hugging Face em 2026-04-19 deixou
+// buffer stale no IndexedDB sob a chave antiga (só config.id), causando
+// inferência com modelo potencialmente desatualizado e sem nova requisição
+// de rede visível no DevTools.
+export function modelCacheKey(config: ModelConfig): string {
+  return `${config.id}::${config.url}`;
+}
+
 // ─── HOOK ─────────────────────────────────────────────────────────────────────
 
 export function useModelDownload(config: ModelConfig): UseModelDownloadResult {
@@ -128,7 +138,8 @@ export function useModelDownload(config: ModelConfig): UseModelDownloadResult {
     if (state.status === 'downloading' || state.status === 'ready') return;
 
     // Verifica cache IndexedDB antes de baixar
-    const cached = await getFromCache(config.id);
+    const cacheKey = modelCacheKey(config);
+    const cached = await getFromCache(cacheKey);
     if (cached) {
       dispatch({ type: 'READY', buffer: cached });
       return;
@@ -175,7 +186,7 @@ export function useModelDownload(config: ModelConfig): UseModelDownloadResult {
       }
 
       const buffer = merged.buffer;
-      await saveToCache(config.id, buffer);
+      await saveToCache(cacheKey, buffer);
       dispatch({ type: 'READY', buffer });
 
     } catch (err) {
