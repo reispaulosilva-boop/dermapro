@@ -50,13 +50,17 @@ function AnalyzingView({
   modelProgress: number;
   detectorStatus: string;
 }) {
-  let message = 'Detectando lesões...';
-  if (modelStatus === 'downloading') {
-    message = `Baixando modelo: ${modelProgress}%`;
-  } else if (modelStatus === 'ready' && detectorStatus === 'loading') {
+  let message: string;
+  if (modelStatus === 'idle' || modelStatus === 'downloading') {
+    message = modelStatus === 'downloading'
+      ? `Baixando modelo neural: ${modelProgress}%`
+      : 'Aguardando download do modelo...';
+  } else if (modelStatus === 'ready' && (detectorStatus === 'idle' || detectorStatus === 'loading')) {
     message = 'Carregando modelo neural...';
   } else if (detectorStatus === 'inferring') {
     message = 'Executando inferência...';
+  } else {
+    message = 'Detectando lesões...';
   }
 
   return (
@@ -138,6 +142,19 @@ export default function AcneModuleClient() {
     // TODO (Bloco 9): implementar exportação PDF via acnePdfExport
     window.alert('Exportação de PDF em desenvolvimento.');
   };
+
+  // Abort analysis if model download or detector hits an error
+  useEffect(() => {
+    if (step !== 'analyzing') return;
+    if (modelDownload.status === 'error' || acneDetector.status === 'error') {
+      const msg =
+        modelDownload.error ??
+        acneDetector.error ??
+        'Erro ao carregar o modelo de detecção.';
+      setAnalysisError(msg);
+      setStep('upload');
+    }
+  }, [step, modelDownload.status, modelDownload.error, acneDetector.status, acneDetector.error]);
 
   // Trigger analysis when model + detector are ready and we're in analyzing step
   useEffect(() => {
