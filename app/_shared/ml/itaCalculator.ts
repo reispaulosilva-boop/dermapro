@@ -18,6 +18,7 @@
 import type { LabColor } from './colorSpace';
 import { rgbToLab, imageDataToLab } from './colorSpace';
 import type { SkinROI } from './roiExtractor';
+import { isPointInROI } from './roiExtractor';
 
 // ─── TIPOS ────────────────────────────────────────────────────────────────────
 
@@ -115,11 +116,7 @@ export function calculateITAFromCanvas(
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const pt = { x, y };
-      const inAnyROI = regions.some(roi => {
-        const { x: bx, y: by, width: bw, height: bh } = roi.bbox;
-        if (x < bx || x > bx + bw || y < by || y > by + bh) return false;
-        return true;
-      });
+      const inAnyROI = regions.some(roi => isPointInROI(pt, roi));
       if (inAnyROI) roiPixels.push(allLab[y * width + x]!);
     }
   }
