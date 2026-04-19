@@ -69,8 +69,12 @@ export function useAcneDetector(modelBuffer: ArrayBuffer | null): UseAcneDetecto
         const ort = await import('onnxruntime-web');
         // WASM files servidos via CDN; para uso offline copiar para public/
         ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/';
+        // WebGPU removido após trava silenciosa em Apple M1 com YOLOv8m (2026-04-19).
+        // WASM é determinístico e tempo de inferência (~2-5s) é aceitável para análise
+        // de fotos em consultório. Reintroduzir WebGPU apenas com timeout de fallback
+        // e feature-flag explícito.
         const session = await ort.InferenceSession.create(modelBuffer, {
-          executionProviders: ['webgpu', 'wasm'],
+          executionProviders: ['wasm'],
         });
         if (!cancelled) {
           sessionRef.current = session;
