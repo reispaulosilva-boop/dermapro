@@ -116,11 +116,8 @@ export function calculateITAFromCanvas(
     for (let x = 0; x < width; x++) {
       const pt = { x, y };
       const inAnyROI = regions.some(roi => {
-        const { x1, y1, x2, y2 } = roi.bbox;
-        if (x < x1 || x > x2 || y < y1 || y > y2) return false;
-        // Verificação exata via isPointInPolygon seria ideal aqui,
-        // mas a verificação de bbox é suficiente para o MVP.
-        // TODO: substituir por isPointInROI para exclusão de holes.
+        const { x: bx, y: by, width: bw, height: bh } = roi.bbox;
+        if (x < bx || x > bx + bw || y < by || y > by + bh) return false;
         return true;
       });
       if (inAnyROI) roiPixels.push(allLab[y * width + x]!);
