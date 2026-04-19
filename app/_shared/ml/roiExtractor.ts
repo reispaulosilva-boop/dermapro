@@ -136,9 +136,11 @@ export function extractForeheadROI(
   width: number,
   height: number,
 ): SkinROI {
-  const frontal = indicesToPolygonList(topographicIndices.frontal, landmarks, width, height);
-  const glabela = indicesToPolygonList(topographicIndices.glabela, landmarks, width, height);
-  const polygons = [...frontal, ...glabela];
+  const frontal    = indicesToPolygonList(topographicIndices.frontal,     landmarks, width, height);
+  const glabela    = indicesToPolygonList(topographicIndices.glabela,     landmarks, width, height);
+  const temporalR  = indicesToPolygonList(topographicIndices.temporal_r,  landmarks, width, height);
+  const temporalL  = indicesToPolygonList(topographicIndices.temporal_l,  landmarks, width, height);
+  const polygons = [...frontal, ...glabela, ...temporalR, ...temporalL];
   return { name: 'forehead', polygons, bbox: polygonsToBbox(polygons) };
 }
 
@@ -147,10 +149,11 @@ export function extractLeftCheekROI(
   width: number,
   height: number,
 ): SkinROI {
-  const ml = indicesToPolygonList(topographicIndices.malar_lateral_l, landmarks, width, height);
-  const mm = indicesToPolygonList(topographicIndices.malar_medial_l,  landmarks, width, height);
-  const ip = indicesToPolygonList(topographicIndices.infrapalpebral_l, landmarks, width, height);
-  const polygons = [...ml, ...mm, ...ip];
+  const ml  = indicesToPolygonList(topographicIndices.malar_lateral_l, landmarks, width, height);
+  const mm  = indicesToPolygonList(topographicIndices.malar_medial_l,  landmarks, width, height);
+  const sm  = indicesToPolygonList(topographicIndices.submalar_l,      landmarks, width, height);
+  const mnd = indicesToPolygonList(topographicIndices.mandibular_l,    landmarks, width, height);
+  const polygons = [...ml, ...mm, ...sm, ...mnd];
   return { name: 'leftCheek', polygons, bbox: polygonsToBbox(polygons) };
 }
 
@@ -159,10 +162,11 @@ export function extractRightCheekROI(
   width: number,
   height: number,
 ): SkinROI {
-  const ml = indicesToPolygonList(topographicIndices.malar_lateral_r, landmarks, width, height);
-  const mm = indicesToPolygonList(topographicIndices.malar_medial_r,  landmarks, width, height);
-  const ip = indicesToPolygonList(topographicIndices.infrapalpebral_r, landmarks, width, height);
-  const polygons = [...ml, ...mm, ...ip];
+  const ml  = indicesToPolygonList(topographicIndices.malar_lateral_r, landmarks, width, height);
+  const mm  = indicesToPolygonList(topographicIndices.malar_medial_r,  landmarks, width, height);
+  const sm  = indicesToPolygonList(topographicIndices.submalar_r,      landmarks, width, height);
+  const mnd = indicesToPolygonList(topographicIndices.mandibular_r,    landmarks, width, height);
+  const polygons = [...ml, ...mm, ...sm, ...mnd];
   return { name: 'rightCheek', polygons, bbox: polygonsToBbox(polygons) };
 }
 
@@ -180,7 +184,9 @@ export function extractNoseROI(
   width: number,
   height: number,
 ): SkinROI {
-  const polygons = indicesToPolygonList(topographicIndices.nariz, landmarks, width, height);
+  const nariz   = indicesToPolygonList(topographicIndices.nariz,   landmarks, width, height);
+  const subnasal = indicesToPolygonList(topographicIndices.subnasal, landmarks, width, height);
+  const polygons = [...nariz, ...subnasal];
   return { name: 'nose', polygons, bbox: polygonsToBbox(polygons) };
 }
 

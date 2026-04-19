@@ -112,9 +112,9 @@ describe('extractForeheadROI', () => {
     expect(extractForeheadROI(LM, 640, 480).name).toBe('forehead');
   });
 
-  it('tem múltiplos polígonos (frontal + glabela)', () => {
+  it('tem múltiplos polígonos (frontal + glabela + 2 temporais)', () => {
     const roi = extractForeheadROI(LM, 640, 480);
-    expect(roi.polygons.length).toBeGreaterThanOrEqual(2);
+    expect(roi.polygons.length).toBeGreaterThanOrEqual(4);
   });
 
   it('todos os polígonos têm pontos positivos', () => {
@@ -143,24 +143,24 @@ describe('extractForeheadROI', () => {
 });
 
 describe('extractNoseROI', () => {
-  it('retorna ROI com nome nose e ao menos 1 polígono', () => {
+  it('retorna ROI com nome nose e 2 polígonos (nariz + subnasal)', () => {
     const roi = extractNoseROI(LM, 640, 480);
     expect(roi.name).toBe('nose');
-    expect(roi.polygons.length).toBeGreaterThanOrEqual(1);
+    expect(roi.polygons.length).toBe(2);
   });
 });
 
 describe('outros extractores', () => {
-  it('extractLeftCheekROI retorna 3 polígonos (malar_lateral + malar_medial + infrapalpebral)', () => {
+  it('extractLeftCheekROI retorna 4 polígonos (malar_lateral + malar_medial + submalar + mandibular)', () => {
     const roi = extractLeftCheekROI(LM, 640, 480);
     expect(roi.name).toBe('leftCheek');
-    expect(roi.polygons.length).toBe(3);
+    expect(roi.polygons.length).toBe(4);
   });
 
-  it('extractRightCheekROI retorna 3 polígonos', () => {
+  it('extractRightCheekROI retorna 4 polígonos', () => {
     const roi = extractRightCheekROI(LM, 640, 480);
     expect(roi.name).toBe('rightCheek');
-    expect(roi.polygons.length).toBe(3);
+    expect(roi.polygons.length).toBe(4);
   });
 
   it('extractChinROI retorna ROI nomeada chin', () => {
