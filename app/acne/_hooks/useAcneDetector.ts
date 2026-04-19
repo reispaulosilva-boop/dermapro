@@ -40,6 +40,8 @@ function makeStubDetections(canvas: HTMLCanvasElement): Detection[] {
   return dets;
 }
 
+const INFERENCE_TIMEOUT_MS = 30_000;
+
 export function useAcneDetector(modelBuffer: ArrayBuffer | null): UseAcneDetectorResult {
   const [status, setStatus] = useState<DetectorStatus>(USE_STUB_DETECTOR ? 'ready' : 'idle');
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +115,13 @@ export function useAcneDetector(modelBuffer: ArrayBuffer | null): UseAcneDetecto
         [inputName]: new ort.Tensor('float32', tensor, dims),
       };
 
-      const results = await session.run(feeds);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error('A análise demorou mais do que o esperado. Recarregue a página e tente novamente.')),
+          INFERENCE_TIMEOUT_MS,
+        ),
+      );
+      const results = await Promise.race([session.run(feeds), timeoutPromise]);
 
       // Primeiro output: shape [1, 5, 8400] para modelo single-class
       const outputKey = session.outputNames[0] ?? Object.keys(results)[0]!;
