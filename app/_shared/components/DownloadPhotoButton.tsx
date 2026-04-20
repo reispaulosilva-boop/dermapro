@@ -25,7 +25,20 @@ function buildFilename(prefix: string, moduleId: string): string {
 }
 
 function downloadCanvas(canvas: HTMLCanvasElement, filename: string) {
-  canvas.toBlob(
+  const dpr = window.devicePixelRatio || 1;
+  
+  // Se o canvas estiver escalonado (High-DPR), precisamos reduzir para o tamanho lógico
+  // para que o arquivo exportado tenha as dimensões e proporções corretas.
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = canvas.width / dpr;
+  exportCanvas.height = canvas.height / dpr;
+  
+  const ctx = exportCanvas.getContext('2d');
+  if (!ctx) return;
+  
+  ctx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
+
+  exportCanvas.toBlob(
     (blob) => {
       if (!blob) return;
       const url = URL.createObjectURL(blob);

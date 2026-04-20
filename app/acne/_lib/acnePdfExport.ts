@@ -61,9 +61,17 @@ export async function exportAcnePdf(input: AcnePdfInput): Promise<void> {
   // ─── Foto anotada ─────────────────────────────────────────────────────────
 
   if (input.annotatedCanvas) {
-    const imgData = input.annotatedCanvas.toDataURL('image/jpeg', 0.85);
-    const natW = input.annotatedCanvas.width;
-    const natH = input.annotatedCanvas.height;
+    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio : 1;
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = input.annotatedCanvas.width / dpr;
+    exportCanvas.height = input.annotatedCanvas.height / dpr;
+    const exportCtx = exportCanvas.getContext('2d');
+    if (exportCtx) {
+      exportCtx.drawImage(input.annotatedCanvas, 0, 0, exportCanvas.width, exportCanvas.height);
+    }
+    const imgData = exportCanvas.toDataURL('image/jpeg', 0.85);
+    const natW = exportCanvas.width;
+    const natH = exportCanvas.height;
     const aspectRatio = natH / natW;
     const maxImgW = CONTENT_W;
     const maxImgH = 100;

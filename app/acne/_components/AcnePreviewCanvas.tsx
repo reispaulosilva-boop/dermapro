@@ -37,6 +37,7 @@ const AcnePreviewCanvas = forwardRef<AcnePreviewCanvasHandle, AcnePreviewCanvasP
       // Definir só a largura; o height: auto do CSS usa os atributos width/height
       // para preservar aspect ratio quando maxWidth: 100% reduz o canvas.
       canvas.style.width = `${logW}px`;
+      canvas.style.height = `${logH}px`;
 
       ctx.save();
       ctx.scale(dpr, dpr);
